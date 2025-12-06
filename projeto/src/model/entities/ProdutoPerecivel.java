@@ -12,9 +12,10 @@ public class ProdutoPerecivel extends Produto{
         setDataValidade(dataValidade);
     }
 
-    public ProdutoPerecivel(String nome, double precoCompra, double precoVenda, int quantidadeEstoque, String tipoProduto, LocalDate dataValidade) {
-        super(nome, precoCompra, precoVenda, quantidadeEstoque, tipoProduto);
-        setDataValidade(dataValidade);
+    //Adotei que o produto cadastrado nasce sem qtd de estoque e dataVal, portanto esse construtor garante q esses dados não devem ser preenchidos pelo usuário
+    public ProdutoPerecivel(String nome, double precoCompra, double precoVenda, String tipoProduto) {
+        super(nome, precoCompra, precoVenda, tipoProduto);
+        dataValidade = null;
     }
 
     public LocalDate getDataValidade() {

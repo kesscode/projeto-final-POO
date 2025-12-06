@@ -1,11 +1,11 @@
 package application;
 
-import exceptions.CnpjInvalidoException;
-import exceptions.DbException;
-import exceptions.NomeInvalidoException;
-import exceptions.TelefoneInvalidoException;
+import db.Db;
+import exceptions.*;
 import model.dao.DAOFactory;
 import model.entities.Fornecedor;
+import model.entities.ProdutoDuravel;
+import model.entities.ProdutoPerecivel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +82,17 @@ public class Main {
             }
         }catch (DbException e) {
             System.out.println("\uD83C\uDD67 " + e.getMessage());
+        }*/
+
+        /*try{
+            ProdutoDuravel pd = new ProdutoDuravel("Coleira", 85.00, 129.90, "duravel", "Nylon");
+            DAOFactory.createProdutoDAO().cadastrar(pd);
+            System.out.println("Produto cadastrado");
+            System.out.println(pd.toString());
+        }catch (TipoInvalidoException e){
+            System.out.println(e.getMessage());
+        }catch (DbException e){
+            System.out.println(e.getMessage());
         }*/
 
 

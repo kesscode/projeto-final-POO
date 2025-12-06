@@ -2,6 +2,7 @@ package model.entities;
 
 import exceptions.TipoInvalidoException;
 
+
 public abstract class Produto {
     private Integer id;
     private String nome;
@@ -10,8 +11,7 @@ public abstract class Produto {
     private int quantidadeEstoque;
     private String tipoProduto;
 
-    public Produto() {
-    }
+    public Produto() {}
 
     public Produto(Integer id, String nome, double precoCompra, double precoVenda, int quantidadeEstoque, String tipoProduto) {
         this.id = id;
@@ -22,11 +22,12 @@ public abstract class Produto {
         setTipoProduto(tipoProduto);
     }
 
-    public Produto(String nome, double precoCompra, double precoVenda, int quantidadeEstoque, String tipoProduto) {
+    //Adotei que o produto cadastrado nasce sem quantidade de estoque, portanto isso não deve ser preenchido pelo usuário
+    public Produto(String nome, double precoCompra, double precoVenda, String tipoProduto) {
         this.nome = nome;
         this.precoCompra = precoCompra;
         this.precoVenda = precoVenda;
-        this.quantidadeEstoque = quantidadeEstoque;
+        this.quantidadeEstoque = 0;
         setTipoProduto(tipoProduto);
     }
 
@@ -93,8 +94,8 @@ public abstract class Produto {
         return "Produto{" +
                 "id=" + id +
                 ", nome='" + nome + '\'' +
-                ", precoCompra=" + precoCompra +
-                ", precoVenda=" + precoVenda +
+                ", precoCompra= R$" + precoCompra +
+                ", precoVenda= R$" + precoVenda +
                 ", quantidadeEstoque=" + quantidadeEstoque +
                 ", tipoProduto='" + tipoProduto + '\'';
     }
