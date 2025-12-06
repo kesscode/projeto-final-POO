@@ -1,5 +1,7 @@
 package model.entities;
 
+import exceptions.TipoInvalidoException;
+
 public abstract class Produto {
     private Integer id;
     private String nome;
@@ -17,7 +19,7 @@ public abstract class Produto {
         this.precoCompra = precoCompra;
         this.precoVenda = precoVenda;
         this.quantidadeEstoque = quantidadeEstoque;
-        this.tipoProduto = tipoProduto;
+        setTipoProduto(tipoProduto);
     }
 
     public Produto(String nome, double precoCompra, double precoVenda, int quantidadeEstoque, String tipoProduto) {
@@ -25,7 +27,7 @@ public abstract class Produto {
         this.precoCompra = precoCompra;
         this.precoVenda = precoVenda;
         this.quantidadeEstoque = quantidadeEstoque;
-        this.tipoProduto = tipoProduto;
+        setTipoProduto(tipoProduto);
     }
 
     public Integer getId() {
@@ -73,7 +75,15 @@ public abstract class Produto {
     }
 
     public void setTipoProduto(String tipoProduto) {
-        this.tipoProduto = tipoProduto;
+        if (tipoProduto == null) {
+            throw new TipoInvalidoException("Tipo de produto inválido! É obrigatório informar o tipo.");
+        }
+        String tipoPadrao = tipoProduto.toUpperCase().trim();
+
+        if (!tipoPadrao.equals("PERECIVEL") && !tipoPadrao.equals("DURAVEL")) {
+            throw new TipoInvalidoException("Tipo de produto inválido! Use apenas: PERECIVEL ou DURAVEL.");
+        }
+        this.tipoProduto = tipoPadrao;
     }
 
     public abstract boolean isDisponivel();

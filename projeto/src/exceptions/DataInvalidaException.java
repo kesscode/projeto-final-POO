@@ -1,6 +1,6 @@
 package exceptions;
 
-public class DataInvalidaException extends Exception {
+public class DataInvalidaException extends RuntimeException {
     public DataInvalidaException(String message) {
         super(message);
     }

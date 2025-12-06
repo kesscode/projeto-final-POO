@@ -1,11 +1,15 @@
 package model.entities;
 
 import exceptions.DataInvalidaException;
+import exceptions.TipoInvalidoException;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class TransacaoEstoque{
     private Integer id;
     private LocalDateTime dataHora;
+    private LocalDate dataValidadeLote;
     private String tipoMovimento;
     private int quantidade;
     private int idProduto;
@@ -14,18 +18,20 @@ public class TransacaoEstoque{
     public TransacaoEstoque() {
     }
 
-    public TransacaoEstoque(LocalDateTime dataHora, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) throws DataInvalidaException {
+    public TransacaoEstoque(LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
         setDataHora(dataHora);
-        this.tipoMovimento = tipoMovimento;
+        setTipoMovimento(tipoMovimento);
+        setDataValidadeLote(dataValidadeLote);
         this.quantidade = quantidade;
         this.idProduto = idProduto;
         this.idFornecedor = idFornecedor;
     }
 
-    public TransacaoEstoque(Integer id, LocalDateTime dataHora, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) throws DataInvalidaException {
+    public TransacaoEstoque(Integer id, LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
         this.id = id;
         setDataHora(dataHora);
-        this.tipoMovimento = tipoMovimento;
+        setDataValidadeLote(dataValidadeLote);
+        setTipoMovimento(tipoMovimento);
         this.quantidade = quantidade;
         this.idProduto = idProduto;
         this.idFornecedor = idFornecedor;
@@ -43,16 +49,24 @@ public class TransacaoEstoque{
         return dataHora;
     }
 
-    public void setDataHora(LocalDateTime dataHora) throws DataInvalidaException {
+    public void setDataHora(LocalDateTime dataHora) {
         //se a data for nula, lança exceção
         if(dataHora == null){
-            throw new DataInvalidaException("Data inválida! A data não pode ser nula.");
+            throw new DataInvalidaException("Data inválida! A data da transação não pode ser nula.");
         }
         //se a data for futura, lança exceção
         if(dataHora.isAfter(LocalDateTime.now())){
-            throw new DataInvalidaException("Data inválida! A data não pode ser futura.");
+            throw new DataInvalidaException("Data inválida! A data da transação não pode ser futura.");
         }
         this.dataHora = dataHora;
+    }
+
+    public LocalDate getDataValidadeLote() {
+        return dataValidadeLote;
+    }
+
+    public void setDataValidadeLote(LocalDate dataValidadeLote) {
+        this.dataValidadeLote = dataValidadeLote;
     }
 
     public String getTipoMovimento() {
@@ -60,7 +74,15 @@ public class TransacaoEstoque{
     }
 
     public void setTipoMovimento(String tipoMovimento) {
-        this.tipoMovimento = tipoMovimento;
+        if (tipoMovimento == null) {
+            throw new TipoInvalidoException("Tipo de movimento inválido! É obrigatório informar o tipo.");
+        }
+
+        String tipoPadrao = tipoMovimento.toUpperCase().trim();
+        if (!tipoPadrao.equals("ENTRADA") && !tipoPadrao.equals("SAIDA")) {
+            throw new TipoInvalidoException("Tipo de movimento inválido! Use: ENTRADA ou SAIDA.");
+        }
+        this.tipoMovimento = tipoPadrao;
     }
 
     public int getQuantidade() {
@@ -92,6 +114,7 @@ public class TransacaoEstoque{
         return "TransacaoEstoque{" +
                 "id=" + id +
                 ", dataHora=" + dataHora +
+                ", dataValidadeLote=" + dataValidadeLote +
                 ", tipoMovimento='" + tipoMovimento + '\'' +
                 ", quantidade=" + quantidade +
                 ", idProduto=" + idProduto +

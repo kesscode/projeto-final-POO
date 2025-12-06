@@ -20,6 +20,7 @@ material varchar(50));
 create table transacoes_estoque(
 id int auto_increment primary key,
 data_hora datetime not null,
+data_validade_lote date,
 tipo_movimento varchar(10) not null,
 quantidade int not null,
 id_produto int not null,
@@ -27,20 +28,25 @@ id_fornecedor int,
 foreign key(id_produto) references produtos(id),
 foreign key(id_fornecedor) references fornecedores(id));
 
-insert into fornecedor (nome, telefone, cnpj) values
-('Distribuidora Pet Ltda', '8532345678', '12345678000190'),
-('Ração & Cia', '85987654321', '98765432000110'),
-('PetFood Brasil', '11912345678', '11222333000144'),
-('Fornecedor ABC', '85998765432', '22333444000155');
+insert into fornecedores (nome, telefone, cnpj) values
+('PetFood Distribuidora Ltda', '85987654321', '12345678000190'),
+('Ração & Cia', '85988776655', '98765432000111'),
+('Brinquedos Pet Brasil', '11999887766', '45678912000134'),
+('Acessórios Animais ME', '8834214180', '32165498000178');
 
-insert into produto (nome, preco_compra, preco_venda, quantidade_estoque, tipo_produto, data_validade, material) values
-('Ração Premium 15kg', 80.00, 120.00, 50, 'PERECIVEL', '2025-06-30', NULL),
-('Coleira de Nylon', 15.00, 25.00, 100, 'DURAVEL', NULL, 'Nylon'),
-('Petisco Natural', 12.00, 20.00, 80, 'PERECIVEL', '2025-03-15', NULL),
-('Casinha Plástica', 150.00, 220.00, 20, 'DURAVEL', NULL, 'Plástico resistente');
+insert into produtos (nome, preco_compra, preco_venda, quantidade_estoque, tipo_produto, data_validade, material) values
+('Ração Premium Cães Adultos 15kg', 85.00, 129.90, 0, 'PERECIVEL', NULL, NULL),
+('Petisco Natural Frango 500g', 18.50, 32.90, 0, 'PERECIVEL', NULL, NULL),
+('Bola Maciça Borracha Grande', 12.00, 24.90, 0, 'DURAVEL', NULL, 'Borracha Natural'),
+('Coleira Ajustável Nylon', 8.50, 19.90, 0, 'DURAVEL', NULL, 'Nylon Reforçado');
 
-insert into transacao_estoque (data_hora, tipo_movimento, quantidade, id_produto, id_fornecedor) values
-('2024-11-01 10:30:00', 'ENTRADA', 50, 1, 1),
-('2024-11-02 14:15:00', 'ENTRADA', 100, 2, 2),
-('2024-11-03 09:00:00', 'SAIDA', 10, 1, NULL),
-('2024-11-05 16:45:00', 'ENTRADA', 80, 3, 1);
+insert into transacoes_estoque (data_hora, data_validade_lote, tipo_movimento, quantidade, id_produto, id_fornecedor) values
+('2024-11-01 09:30:00', '2025-12-31', 'ENTRADA', 50, 1, 1), -- Compra da Ração (Validade do lote definida aqui)
+('2024-11-05 14:15:00', '2025-07-15', 'ENTRADA', 100, 2, 2), -- Compra do Petisco (Validade do lote definida aqui)
+('2024-11-10 10:45:00', NULL, 'ENTRADA', 80, 3, 3), -- Compra da Bola (Durável, validade NULL)
+('2024-11-12 16:20:00', NULL, 'ENTRADA', 120, 4, 4); -- Compra da Coleira (Durável, validade NULL)
+
+update produtos set quantidade_estoque = 50, data_validade = '2025-12-31' where id = 1;  -- Ração: validade do lote
+update produtos set quantidade_estoque = 100, data_validade = '2025-07-15' where id = 2; -- Petisco: validade do lote
+update produtos set quantidade_estoque = 80 where id = 3;  -- Bola: sem validade (durável)
+update produtos set quantidade_estoque = 120 where id = 4; -- Coleira: sem validade (durável)
