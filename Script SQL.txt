@@ -1,0 +1,46 @@
+create database estoque_petshop;
+use estoque_petshop;
+
+create table fornecedores(
+id int auto_increment primary key,
+nome varchar(100) not null,
+telefone varchar(11) not null,
+cnpj varchar(14) not null unique);
+
+create table produtos(
+id int auto_increment primary key,
+nome varchar(100) not null,
+preco_compra decimal(10,2) not null,
+preco_venda decimal(10, 2) not null,
+quantidade_estoque int not null default 0,
+tipo_produto varchar(20) not null,
+data_validade date,
+material varchar(50));
+
+create table transacoes_estoque(
+id int auto_increment primary key,
+data_hora datetime not null,
+tipo_movimento varchar(10) not null,
+quantidade int not null,
+id_produto int not null,
+id_fornecedor int,
+foreign key(id_produto) references produtos(id),
+foreign key(id_fornecedor) references fornecedores(id));
+
+insert into fornecedor (nome, telefone, cnpj) values
+('Distribuidora Pet Ltda', '8532345678', '12345678000190'),
+('Ração & Cia', '85987654321', '98765432000110'),
+('PetFood Brasil', '11912345678', '11222333000144'),
+('Fornecedor ABC', '85998765432', '22333444000155');
+
+insert into produto (nome, preco_compra, preco_venda, quantidade_estoque, tipo_produto, data_validade, material) values
+('Ração Premium 15kg', 80.00, 120.00, 50, 'PERECIVEL', '2025-06-30', NULL),
+('Coleira de Nylon', 15.00, 25.00, 100, 'DURAVEL', NULL, 'Nylon'),
+('Petisco Natural', 12.00, 20.00, 80, 'PERECIVEL', '2025-03-15', NULL),
+('Casinha Plástica', 150.00, 220.00, 20, 'DURAVEL', NULL, 'Plástico resistente');
+
+insert into transacao_estoque (data_hora, tipo_movimento, quantidade, id_produto, id_fornecedor) values
+('2024-11-01 10:30:00', 'ENTRADA', 50, 1, 1),
+('2024-11-02 14:15:00', 'ENTRADA', 100, 2, 2),
+('2024-11-03 09:00:00', 'SAIDA', 10, 1, NULL),
+('2024-11-05 16:45:00', 'ENTRADA', 80, 3, 1);
