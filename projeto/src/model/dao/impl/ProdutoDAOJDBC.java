@@ -1,6 +1,7 @@
 package model.dao.impl;
 
 import db.Db;
+import exceptions.DataInvalidaException;
 import exceptions.DbException;
 import exceptions.TipoInvalidoException;
 import model.dao.ProdutoDAO;
@@ -124,7 +125,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                 String tipoProd = rs.getString("tipo_produto");
 
                 try {
-                    if (tipoProd.equals("PERECIVEL")) {
+                    if ("PERECIVEL".equals(tipoProd)) {
                         java.sql.Date data = rs.getDate("data_validade");
                         LocalDate dataValid;
 
@@ -155,16 +156,30 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
         PreparedStatement st = null;
 
         try {
-            st = conn.prepareStatement("update produtos set nome = ?, preco_compra = ?, preco_venda = ?, material = ? where id = ?");
+            st = conn.prepareStatement("update produtos set nome = ?, preco_compra = ?, preco_venda = ?, data_validade = ?, material = ? where id = ?");
             st.setString(1, p.getNome());
             st.setDouble(2, p.getPrecoCompra());
             st.setDouble(3, p.getPrecoVenda());
-            if (p instanceof ProdutoDuravel pd)
-                st.setString(4, pd.getMaterial());
-            else
-                st.setNull(4, Types.VARCHAR);
-            st.setInt(5, p.getId());
 
+            if(p instanceof ProdutoPerecivel pp){
+                //Se não tem estoque, não tem data
+                if (pp.getQuantidadeEstoque() == 0) {
+                    st.setNull(4, Types.DATE);
+                }
+                //Se tem estoque, precisa ter data
+                else {
+                    if (pp.getDataValidade() == null) {
+                        throw new DataInvalidaException("Erro ao atualizar data: Produto com estoque positivo precisa ter data de validade.");
+                    }
+                    st.setDate(4, java.sql.Date.valueOf(pp.getDataValidade()));
+                }
+                st.setNull(5,Types.VARCHAR);
+            }else if(p instanceof ProdutoDuravel pd) {
+                st.setNull(4, Types.DATE);
+                st.setString(5, pd.getMaterial());
+            }
+
+            st.setInt(6, p.getId());
             int linhasAfetadas = st.executeUpdate();
             if (linhasAfetadas == 0) {
                 throw new DbException("Produto de ID " + p.getId() + " não encontrado.");

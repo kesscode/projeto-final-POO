@@ -68,17 +68,18 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
                     f.setNome(rs.getString("nome"));
                     f.setTelefone(rs.getString("telefone"));
                     f.setCnpj(rs.getString("cnpj"));
+                    return f;
                 } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e) {
                     throw new DbException("Dados do Fornecedor de ID " + id + " está mal-formatado: " + e.getMessage());
                 }
             }
+            return null;
         } catch (SQLException e) {
             throw new DbException("Erro ao buscar fornecedor: " + e.getMessage());
         } finally {
             Db.closeStatement(st);
             Db.closeResultSet(rs);
         }
-        return f;
     }
 
     public List<Fornecedor> buscarTodos() {
