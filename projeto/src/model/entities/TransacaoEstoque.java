@@ -85,6 +85,11 @@ public class TransacaoEstoque{
         if (!tipoPadrao.equals("ENTRADA") && !tipoPadrao.equals("SAIDA")) {
             throw new TipoInvalidoException("Tipo de movimento inválido! Use: ENTRADA ou SAIDA.");
         }
+
+        if (tipoMovimento.equals("SAIDA") && dataValidadeLote != null) {
+            throw new TipoInvalidoException("Saída não pode ter data de validade!");
+        }
+
         this.tipoMovimento = tipoPadrao;
     }
 

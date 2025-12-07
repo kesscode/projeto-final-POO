@@ -80,13 +80,8 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                 String tipoProd = rs.getString("tipo_produto");
 
                 if ("PERECIVEL".equals(tipoProd)) {
-                    java.sql.Date data = rs.getDate("data_validade");
-                    LocalDate dataValid;
-
-                    if (data != null)
-                        dataValid = data.toLocalDate();
-                    else
-                        dataValid = null;
+                    Date dataSql = rs.getDate("data_validade");
+                    LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;;
 
                     return new ProdutoPerecivel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, dataValid);
                 } else {
@@ -98,7 +93,9 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                     }
                 }
             }
+
             return null;
+
         } catch (SQLException e) {
             throw new DbException("Erro ao buscar produto: " + e.getMessage());
         } finally {
@@ -131,8 +128,12 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
 
                         produtos.add(new ProdutoPerecivel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, dataValid));
                     } else {
-                        String material = rs.getString("material");
-                        produtos.add(new ProdutoDuravel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, material));
+                        try {
+                            String material = rs.getString("material");
+                            produtos.add(new ProdutoDuravel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, material));
+                        } catch (TipoInvalidoException e) {
+                            throw new DbException("Dados do produto de ID " + id + " está mal-formatado: " + e.getMessage());
+                        }
                     }
                 } catch (TipoInvalidoException e) {
                     System.out.println("Dados do produto de ID " + id + " está mal-formatado: " + e.getMessage());

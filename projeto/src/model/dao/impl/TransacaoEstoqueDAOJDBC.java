@@ -1,7 +1,9 @@
 package model.dao.impl;
 
 import db.Db;
+import exceptions.DataInvalidaException;
 import exceptions.DbException;
+import exceptions.TipoInvalidoException;
 import model.dao.TransacaoEstoqueDAO;
 import model.entities.TransacaoEstoque;
 
@@ -27,16 +29,18 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                 throw new DbException("Transação já cadastrada! ID: " + tr.getId());
             }
 
-            //uso de transação: "desliguei" o commit automatico para garantir a atomicidade
+            //uso de transaction: "desliguei" o commit automatico para garantir a atomicidade
             conn.setAutoCommit(false);
-            st = conn.prepareStatement("insert into transacoes_estoque(data_hora, data_validade_lote, tipo_movimento, quantidade, id_produto, id_fornecedor)" +
-                                            " values (?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+
+            st = conn.prepareStatement("insert into transacoes_estoque(data_hora, data_validade_lote, " +
+                                            "tipo_movimento, quantidade, id_produto, id_fornecedor) " +
+                                            "values (?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 
             st.setTimestamp(1, Timestamp.valueOf(tr.getDataHora()));
 
             //não tem data (caso da saída)
-            if(tr.getDataHora() == null) {
-                st.setNull(2, Types.TIMESTAMP);
+            if(tr.getDataValidadeLote() == null) {
+                st.setNull(2, Types.DATE);
             } else { //tem data (caso da entrada)
                 st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
             }
@@ -45,10 +49,10 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             st.setInt(4, tr.getQuantidade());
             st.setInt(5, tr.getIdProduto());
 
-            if("ENTRADA".equals(tr.getTipoMovimento())) {
+            if (tr.getIdFornecedor() != null) {
                 st.setInt(6, tr.getIdFornecedor());
-            }else if("SAIDA".equals(tr.getTipoMovimento())) {
-                st.setNull(7, Types.INTEGER);
+            } else {
+                st.setNull(6, Types.INTEGER);
             }
 
             int linhasAfetadas = st.executeUpdate();
@@ -60,25 +64,60 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                 }
             }
 
-            //atualizar o estoque
             atualizarEstoqueProduto(tr);
-
             conn.commit();
+
         } catch (SQLException e) {
             try{
                 conn.rollback();
-            }catch (SQLException e){
-                throw new DbException("Erro: Falha no Rollback! " + e.getMessage());
+            }catch (SQLException e1){
+                throw new DbException("Erro no rollback: " + e1.getMessage());
             }
-            throw new DbException("Erro ao cadastrar transação: " + e.getMessage());
+            throw new DbException("Erro na transação: " + e.getMessage());
         }finally {
             Db.closeResultSet(rs);
             Db.closeStatement(st);
-
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e2) {
+                System.out.println(e2.getMessage());
+            }
         }
     }
 
     public TransacaoEstoque buscarPorId(int id){
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        TransacaoEstoque transacao = new TransacaoEstoque();
+
+        try{
+            st = conn.prepareStatement("select * from transacoes_estoque where id = ?");
+            st.setInt(1, id);
+
+            rs = st.executeQuery();
+
+            if (rs.next()) {
+                try {
+                    transacao.setId(rs.getInt("id"));
+                    transacao.setDataHora(rs.getDate("data_hora"));
+                    transacao.setDataValidadeLote("");
+                    transacao.setTipoMovimento();
+                    transacao.setQuantidade();
+                    transacao.getIdProduto();
+                    transacao.getIdFornecedor();
+                    return transacao;
+
+                    // data_hora, data_validade_lote, tipo_movimento, quantidade, id_produto, id_fornecedor
+                } catch (DataInvalidaException | TipoInvalidoException e) {
+                    throw new DbException("Dados da transação de ID " + id + " está mal-formatado: " + e.getMessage());
+                }
+            }
+            return null;
+
+        }catch (SQLException e){
+            System.out.println("Erro: não foi possível buscar a transação.");
+        }
+
         return new TransacaoEstoque();
     }
 
@@ -88,11 +127,11 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
 
     private void atualizarEstoqueProduto(TransacaoEstoque tr) throws SQLException {
         PreparedStatement st = null;
+        PreparedStatement stUpdate = null;
         ResultSet rs = null;
 
         try {
-            st = conn.prepareStatement("select tipo_produto, data_validade from produtos where id = ?");
-
+            st = conn.prepareStatement("select quantidade_estoque, tipo_produto, data_validade from produtos where id = ?");
             st.setInt(1, tr.getIdProduto());
             rs = st.executeQuery();
 
@@ -101,52 +140,97 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                 String tipoProduto = rs.getString("tipo_produto");
                 Date dataSql = rs.getDate("data_validade");
                 LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;
+                int estoqueAtual = rs.getInt("quantidade_estoque");
+
 
                 //se o produto referenciado for duravel e tem data de validade, erro!
                 if (("DURAVEL").equals(tipoProduto) && tr.getDataValidadeLote() != null) {
                     throw new DbException("Erro: produto durável não pode ter data de validade.");
                 }
+
                 //se o produto referenciado for perecivel, é uma entrada e não tem data de validade, erro!
                 if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento()) && tr.getDataValidadeLote() == null) {
                     throw new DbException("Erro: Entrada de produto perecivel exige data de validade.");
                 }
 
-                Db.closeStatement(st);
+                if ("SAIDA".equals(tr.getTipoMovimento()) && estoqueAtual < tr.getQuantidade()) {
+                    throw new DbException("Erro: Estoque do produto insuficiente para venda!");
+                }
+
 
                 //se passou, tá tudo certo. agora atualizamos o estoque/data
                 if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
-                    st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ?, data_validade = ? where id = ?");
-                    st.setInt(1, tr.getQuantidade());
+                    stUpdate = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ?, data_validade = ? where id = ?");
+                    stUpdate.setInt(1, tr.getQuantidade());
 
                     //lógica para salvar o lote mais próximo de vencer:
                     if (dataValid == null)
-                        st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
+                        stUpdate.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
                     else {
                         if (dataValid.isAfter(tr.getDataValidadeLote()))
-                            st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
+                            stUpdate.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
                         else
-                            st.setDate(2, Date.valueOf(dataValid));
+                            stUpdate.setDate(2, Date.valueOf(dataValid));
                     }
+                    stUpdate.setInt(3, tr.getIdProduto());
 
-                    st.setInt(3, tr.getIdProduto());
                 } else if (("DURAVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
-                    st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ? where id = ?");
-                    st.setInt(1, tr.getQuantidade());
-                    st.setInt(2, tr.getIdProduto());
-                } else if ("SAIDA".equals(tr.getTipoMovimento())) {
-                    st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque - ? where id = ?");
-                    st.setInt(1, tr.getQuantidade());
-                    st.setInt(2, tr.getIdProduto());
-                }
-                st.executeUpdate();
+                    stUpdate = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ? where id = ?");
+                    stUpdate.setInt(1, tr.getQuantidade());
+                    stUpdate.setInt(2, tr.getIdProduto());
 
+                } else if ("SAIDA".equals(tr.getTipoMovimento())) {
+                    stUpdate = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque - ? where id = ?");
+                    stUpdate.setInt(1, tr.getQuantidade());
+                    stUpdate.setInt(2, tr.getIdProduto());
+                } else {
+                    throw new DbException("Erro: Tipo de transação inválida.");
+                }
+
+                int linhasAfetadas = stUpdate.executeUpdate();
+                if (linhasAfetadas == 0) {
+                    throw new DbException("Erro: Não foi possível atualizar o produto.");
+                }
             } else {
-                throw new DbException("Produto de ID " + tr.getIdProduto() + " não encontrado para atualizar estoque.");
+                throw new DbException("Erro: Produto de ID " + tr.getIdProduto() + " não encontrado.");
             }
         } finally {
-            Db.closeStatement(st);
             Db.closeResultSet(rs);
+            Db.closeStatement(stUpdate);
+            Db.closeStatement(st);
         }
     }
 
 }
+
+/*
+ public Fornecedor buscarPorId(int id) {
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        Fornecedor f = new Fornecedor();
+
+        try {
+            st = conn.prepareStatement("select * from fornecedores where id = ?");
+            st.setInt(1, id);
+
+            rs = st.executeQuery();
+
+            if (rs.next()) {
+                try {
+                    f.setId(rs.getInt("id"));
+                    f.setNome(rs.getString("nome"));
+                    f.setTelefone(rs.getString("telefone"));
+                    f.setCnpj(rs.getString("cnpj"));
+                    return f;
+                } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e) {
+                    throw new DbException("Dados do Fornecedor de ID " + id + " está mal-formatado: " + e.getMessage());
+                }
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new DbException("Erro ao buscar fornecedor: " + e.getMessage());
+        } finally {
+            Db.closeStatement(st);
+            Db.closeResultSet(rs);
+        }
+    }*/
