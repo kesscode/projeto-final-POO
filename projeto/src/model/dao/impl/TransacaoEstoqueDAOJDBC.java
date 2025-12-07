@@ -9,6 +9,7 @@ import model.entities.TransacaoEstoque;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,7 +89,6 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
     public TransacaoEstoque buscarPorId(int id){
         PreparedStatement st = null;
         ResultSet rs = null;
-        TransacaoEstoque transacao = new TransacaoEstoque();
 
         try{
             st = conn.prepareStatement("select * from transacoes_estoque where id = ?");
@@ -97,17 +97,32 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             rs = st.executeQuery();
 
             if (rs.next()) {
+                TransacaoEstoque transacao = new TransacaoEstoque();
                 try {
                     transacao.setId(rs.getInt("id"));
-                    transacao.setDataHora(rs.getDate("data_hora"));
-                    transacao.setDataValidadeLote("");
-                    transacao.setTipoMovimento();
-                    transacao.setQuantidade();
-                    transacao.getIdProduto();
-                    transacao.getIdFornecedor();
+
+                    java.sql.Timestamp dataSql = rs.getTimestamp("data_hora");
+                    LocalDateTime dataHora = (dataSql != null) ? dataSql.toLocalDateTime() : null;
+
+                    java.sql.Date dataValSql = rs.getDate("data_validade_lote");
+                    LocalDate dataValid = (dataValSql != null) ? dataValSql.toLocalDate() : null;
+
+                    transacao.setDataHora(dataHora);
+                    transacao.setDataValidadeLote(dataValid);
+
+                    transacao.setTipoMovimento(rs.getString("tipo_movimento"));
+                    transacao.setQuantidade(rs.getInt("quantidade"));
+                    transacao.setIdProduto(rs.getInt("id_produto"));
+
+                    int idForn = rs.getInt("id_fornecedor");
+                    if (rs.wasNull()) {
+                        transacao.setIdFornecedor(null);
+                    } else {
+                        transacao.setIdFornecedor(idForn);
+                    }
+
                     return transacao;
 
-                    // data_hora, data_validade_lote, tipo_movimento, quantidade, id_produto, id_fornecedor
                 } catch (DataInvalidaException | TipoInvalidoException e) {
                     throw new DbException("Dados da transação de ID " + id + " está mal-formatado: " + e.getMessage());
                 }
@@ -115,14 +130,52 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             return null;
 
         }catch (SQLException e){
-            System.out.println("Erro: não foi possível buscar a transação.");
+            throw new DbException("Erro ao buscar transação: " + e.getMessage());
+        } finally {
+            Db.closeResultSet(rs);
+            Db.closeStatement(st);
         }
-
-        return new TransacaoEstoque();
     }
 
     public List<TransacaoEstoque> buscarTodos(){
-        return new ArrayList<>();
+        PreparedStatement st = null;
+        ResultSet rs = null;
+
+        try{
+            st = conn.prepareStatement("select * from transacoes_estoque");
+            rs = st.executeQuery();
+            List<TransacaoEstoque> transacoes = new ArrayList<>();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                try {
+                    java.sql.Timestamp dataSql = rs.getTimestamp("data_hora");
+                    LocalDateTime dataHora = (dataSql != null) ? dataSql.toLocalDateTime() : null;
+
+                    java.sql.Date dataValSql = rs.getDate("data_validade_lote");
+                    LocalDate dataValid = (dataValSql != null) ? dataValSql.toLocalDate() : null;
+
+                    String tipoMov = rs.getString("tipo_movimento");
+                    int qtd = rs.getInt("quantidade");
+                    int id_prod = rs.getInt("id_produto");
+
+                    int idForn = rs.getInt("id_fornecedor");
+                    if (rs.wasNull()) {
+                        transacoes.add(new TransacaoEstoque(id, dataHora, dataValid, tipoMov, qtd, id_prod, null));
+                    } else {
+                        transacoes.add(new TransacaoEstoque(id, dataHora, dataValid, tipoMov, qtd, id_prod, idForn));
+                    }
+                } catch (DataInvalidaException | TipoInvalidoException e) {
+                    System.out.println("Dados do produto de ID " + id + " está mal-formatado: " + e.getMessage());
+                }
+            }
+            return transacoes;
+        }catch (SQLException e){
+            throw new DbException("Erro ao buscar transações: " + e.getMessage());
+        } finally {
+            Db.closeResultSet(rs);
+            Db.closeStatement(st);
+        }
     }
 
     private void atualizarEstoqueProduto(TransacaoEstoque tr) throws SQLException {
@@ -203,34 +256,3 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
 
 }
 
-/*
- public Fornecedor buscarPorId(int id) {
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        Fornecedor f = new Fornecedor();
-
-        try {
-            st = conn.prepareStatement("select * from fornecedores where id = ?");
-            st.setInt(1, id);
-
-            rs = st.executeQuery();
-
-            if (rs.next()) {
-                try {
-                    f.setId(rs.getInt("id"));
-                    f.setNome(rs.getString("nome"));
-                    f.setTelefone(rs.getString("telefone"));
-                    f.setCnpj(rs.getString("cnpj"));
-                    return f;
-                } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e) {
-                    throw new DbException("Dados do Fornecedor de ID " + id + " está mal-formatado: " + e.getMessage());
-                }
-            }
-            return null;
-        } catch (SQLException e) {
-            throw new DbException("Erro ao buscar fornecedor: " + e.getMessage());
-        } finally {
-            Db.closeStatement(st);
-            Db.closeResultSet(rs);
-        }
-    }*/
