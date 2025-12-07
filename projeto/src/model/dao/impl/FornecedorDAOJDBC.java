@@ -22,6 +22,10 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
 
     @Override
     public void cadastrar(Fornecedor f) {
+        if (f.getId() != null) {
+            throw new DbException("Fornecedor já cadastrado! ID: " + f.getId());
+        }
+
         PreparedStatement st = null;
         ResultSet rs = null;
         try {
@@ -50,6 +54,7 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
     public Fornecedor buscarPorId(int id) {
         PreparedStatement st = null;
         ResultSet rs = null;
+        Fornecedor f = new Fornecedor();
 
         try {
             st = conn.prepareStatement("select * from fornecedores where id = ?");
@@ -58,7 +63,6 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
             rs = st.executeQuery();
 
             if (rs.next()) {
-                Fornecedor f = new Fornecedor();
                 try {
                     f.setId(rs.getInt("id"));
                     f.setNome(rs.getString("nome"));
@@ -67,15 +71,14 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
                 } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e) {
                     throw new DbException("Dados do Fornecedor de ID " + id + " está mal-formatado: " + e.getMessage());
                 }
-                return f;
             }
-            return null;
         } catch (SQLException e) {
             throw new DbException("Erro ao buscar fornecedor: " + e.getMessage());
         } finally {
             Db.closeStatement(st);
             Db.closeResultSet(rs);
         }
+        return f;
     }
 
     public List<Fornecedor> buscarTodos() {
@@ -122,8 +125,10 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
             st.setString(2, f.getTelefone());
             st.setInt(3, f.getId());
 
-            st.executeUpdate();
-
+            int linhasAfetadas = st.executeUpdate();
+            if (linhasAfetadas == 0) {
+                throw new DbException("Fornecedor de ID " + f.getId() + " não encontrado.");
+            }
         } catch (SQLException e) {
             throw new DbException("Erro ao atualizar fornecedor: " + e.getMessage());
         } finally {
@@ -143,14 +148,12 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
             if (linhasAfetadas == 0) {
                 throw new DbException("Falha ao deletar: fornecedor de ID " + id + " não encontrado.");
             }
-
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
-            throw new DbException("Falha ao deletar: fornecedor de ID " + id + " vinculado a registros de compra.");
+            throw new DbException("Falha ao deletar: fornecedor de ID " + id + " está vinculado a registros de compra.");
         } catch (SQLException e) {
             throw new DbException("Erro ao deletar fornecedor: " + e.getMessage());
         } finally {
             Db.closeStatement(st);
         }
     }
-
 }

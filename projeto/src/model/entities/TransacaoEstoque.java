@@ -18,20 +18,20 @@ public class TransacaoEstoque{
     public TransacaoEstoque() {
     }
 
-    public TransacaoEstoque(LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
-        setDataHora(dataHora);
-        setTipoMovimento(tipoMovimento);
-        setDataValidadeLote(dataValidadeLote);
-        this.quantidade = quantidade;
-        this.idProduto = idProduto;
-        this.idFornecedor = idFornecedor;
-    }
-
     public TransacaoEstoque(Integer id, LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
         this.id = id;
         setDataHora(dataHora);
         setDataValidadeLote(dataValidadeLote);
         setTipoMovimento(tipoMovimento);
+        this.quantidade = quantidade;
+        this.idProduto = idProduto;
+        this.idFornecedor = idFornecedor;
+    }
+
+    public TransacaoEstoque(LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
+        setDataHora(dataHora);
+        setTipoMovimento(tipoMovimento);
+        setDataValidadeLote(dataValidadeLote);
         this.quantidade = quantidade;
         this.idProduto = idProduto;
         this.idFornecedor = idFornecedor;
@@ -66,6 +66,9 @@ public class TransacaoEstoque{
     }
 
     public void setDataValidadeLote(LocalDate dataValidadeLote) {
+        if (tipoMovimento != null && tipoMovimento.equals("ENTRADA") && dataValidadeLote != null && dataValidadeLote.isBefore(LocalDate.now())) {
+            throw new DataInvalidaException("Data inválida! Não é possível dar entrada em um lote já vencido!");
+        }
         this.dataValidadeLote = dataValidadeLote;
     }
 

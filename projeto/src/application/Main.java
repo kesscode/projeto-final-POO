@@ -26,8 +26,7 @@ public class Main {
             System.out.println("\uD83C\uDD67 " + e.getMessage());
         }*/
 
-
-/*        try{
+        try{
             Fornecedor f = DAOFactory.createFornecedorDAO().buscarPorId(3);
             if(f != null)
                 System.out.println("FORNECEDOR ENCONTRADO: \n" + f.toString());
@@ -38,7 +37,7 @@ public class Main {
             System.out.println("\uD83C\uDD67 " + e.getMessage());
         }catch (DbException e) {
             System.out.println("\uD83C\uDD67 " + e.getMessage());
-        }*/
+        }
 
 /*        try{
             List<Fornecedor> fornecedores = new ArrayList<>();
@@ -95,7 +94,7 @@ public class Main {
             System.out.println(e.getMessage());
         }*/
 
-
-
+        /*ProdutoDuravel p = (ProdutoDuravel) DAOFactory.createProdutoDAO().buscarPorId(3);
+        System.out.println(p.toString());*/
     }
 }

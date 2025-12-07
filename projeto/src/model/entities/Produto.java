@@ -94,9 +94,9 @@ public abstract class Produto {
         return "Produto{" +
                 "id=" + id +
                 ", nome='" + nome + '\'' +
-                ", precoCompra= R$" + precoCompra +
-                ", precoVenda= R$" + precoVenda +
-                ", quantidadeEstoque=" + quantidadeEstoque +
+                ", precoCompra=R$" + precoCompra +
+                ", precoVenda=R$" + precoVenda +
+                ", quantidadeEstoque=" + quantidadeEstoque + "unid" +
                 ", tipoProduto='" + tipoProduto + '\'';
     }
 }
