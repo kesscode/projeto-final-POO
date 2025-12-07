@@ -171,6 +171,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                     if (pp.getDataValidade() == null) {
                         throw new DataInvalidaException("Erro ao atualizar data: Produto com estoque positivo precisa ter data de validade.");
                     }
+                    //add validação de data errada
                     st.setDate(4, java.sql.Date.valueOf(pp.getDataValidade()));
                 }
                 st.setNull(5,Types.VARCHAR);

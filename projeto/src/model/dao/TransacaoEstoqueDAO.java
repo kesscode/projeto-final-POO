@@ -14,5 +14,4 @@ public interface TransacaoEstoqueDAO {
     void cadastrar(TransacaoEstoque tr); //Create
     TransacaoEstoque buscarPorId(int id); //Read
     List<TransacaoEstoque> buscarTodos(); //Read
-    void atualizar(TransacaoEstoque tr); //Update
 }
