@@ -61,10 +61,20 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             }
 
             //atualizar o estoque
+            atualizarEstoqueProduto(tr);
 
-
+            conn.commit();
         } catch (SQLException e) {
+            try{
+                conn.rollback();
+            }catch (SQLException e){
+                throw new DbException("Erro: Falha no Rollback! " + e.getMessage());
+            }
             throw new DbException("Erro ao cadastrar transação: " + e.getMessage());
+        }finally {
+            Db.closeResultSet(rs);
+            Db.closeStatement(st);
+
         }
     }
 
@@ -76,61 +86,67 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
         return new ArrayList<>();
     }
 
-    private void atualizarEstoqueProduto(TransacaoEstoque tr, Connection conn, PreparedStatement st, ResultSet rs) throws SQLException{
-        //verificação do tipo do produto referenciado na transação atual (conferir se batem)
-        try {
-            st = conn.prepareStatement("select produtos.tipo_produto, produtos.data_validade " +
-                    "from produtos join transacoes_estoque " +
-                    "on produtos.id = transacoes_estoque.id_produto " +
-                    "where transacoes_estoque.id = ?");
+    private void atualizarEstoqueProduto(TransacaoEstoque tr) throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
 
-            st.setInt(1, tr.getId());
+        try {
+            st = conn.prepareStatement("select tipo_produto, data_validade from produtos where id = ?");
+
+            st.setInt(1, tr.getIdProduto());
             rs = st.executeQuery();
 
-            String tipoProduto = rs.getString("tipo_produto");
-            LocalDate dataValidade = rs.getObject("data_validade", LocalDate.class);
+            //verificação do tipo do produto referenciado na transação atual (conferir se batem)
+            if (rs.next()) {
+                String tipoProduto = rs.getString("tipo_produto");
+                Date dataSql = rs.getDate("data_validade");
+                LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;
 
-            //se o produto referenciado for duravel e tem data de validade, erro!
-            if (("DURAVEL").equals(tipoProduto) && tr.getDataValidadeLote() != null) {
-                throw new DbException("Tipo do produto de ID " + tr.getIdProduto() + " não equivale ao informado");
-            }
-            //se o produto referenciado for perecivel, é uma entrada e não tem data de validade, erro!
-            if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento()) && tr.getDataValidadeLote() != null) {
-                throw new DbException("Tipo do produto de ID " + tr.getIdProduto() + " não equivale ao informado");
-            }
-
-
-            //se passou, tá tudo certo. agora atualizamos o estoque/data
-            if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
-                st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ?, data_validade = ?, where id = ?");
-                st.setInt(1, tr.getQuantidade());
-
-
-                //lógica para salvar o lote mais próximo de vencer:
-                if (dataValidade == null)
-                    st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
-                else {
-                    if (dataValidade.isAfter(tr.getDataValidadeLote()))
-                        st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
-                    else
-                        st.setDate(2, Date.valueOf(dataValidade));
+                //se o produto referenciado for duravel e tem data de validade, erro!
+                if (("DURAVEL").equals(tipoProduto) && tr.getDataValidadeLote() != null) {
+                    throw new DbException("Erro: produto durável não pode ter data de validade.");
+                }
+                //se o produto referenciado for perecivel, é uma entrada e não tem data de validade, erro!
+                if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento()) && tr.getDataValidadeLote() == null) {
+                    throw new DbException("Erro: Entrada de produto perecivel exige data de validade.");
                 }
 
-                st.setInt(3, tr.getIdProduto());
-            } else if (("DURAVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
-                st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ?, where id = ?");
-                st.setInt(1, tr.getQuantidade());
-                st.setInt(2, tr.getIdProduto());
+                Db.closeStatement(st);
 
-            } else if ("SAIDA".equals(tr.getTipoMovimento())) {
-                st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque - ?, where id = ?");
-                st.setInt(1, tr.getQuantidade());
-                st.setInt(2, tr.getIdProduto());
+                //se passou, tá tudo certo. agora atualizamos o estoque/data
+                if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
+                    st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ?, data_validade = ? where id = ?");
+                    st.setInt(1, tr.getQuantidade());
+
+                    //lógica para salvar o lote mais próximo de vencer:
+                    if (dataValid == null)
+                        st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
+                    else {
+                        if (dataValid.isAfter(tr.getDataValidadeLote()))
+                            st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
+                        else
+                            st.setDate(2, Date.valueOf(dataValid));
+                    }
+
+                    st.setInt(3, tr.getIdProduto());
+                } else if (("DURAVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
+                    st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ? where id = ?");
+                    st.setInt(1, tr.getQuantidade());
+                    st.setInt(2, tr.getIdProduto());
+                } else if ("SAIDA".equals(tr.getTipoMovimento())) {
+                    st = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque - ? where id = ?");
+                    st.setInt(1, tr.getQuantidade());
+                    st.setInt(2, tr.getIdProduto());
+                }
+                st.executeUpdate();
+
+            } else {
+                throw new DbException("Produto de ID " + tr.getIdProduto() + " não encontrado para atualizar estoque.");
             }
-
-            st.executeUpdate();
-        } catch (DbException e){
-            System.out.println("Erro ao atualizar estoque: " + e.getMessage());
+        } finally {
+            Db.closeStatement(st);
+            Db.closeResultSet(rs);
         }
     }
+
 }

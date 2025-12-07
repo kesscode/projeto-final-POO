@@ -126,13 +126,8 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
 
                 try {
                     if ("PERECIVEL".equals(tipoProd)) {
-                        java.sql.Date data = rs.getDate("data_validade");
-                        LocalDate dataValid;
-
-                        if (data != null)
-                            dataValid = data.toLocalDate();
-                        else
-                            dataValid = null;
+                        Date dataSql = rs.getDate("data_validade");
+                        LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;;
 
                         produtos.add(new ProdutoPerecivel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, dataValid));
                     } else {
