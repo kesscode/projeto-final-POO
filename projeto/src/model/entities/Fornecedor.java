@@ -41,7 +41,7 @@ public class Fornecedor extends Pessoa{
 
     @Override
     public String getDocumentoFormatado(){
-        if (this.cnpj == null) {
+        if (cnpj == null) {
             return "CNPJ não informado!";
         }
 

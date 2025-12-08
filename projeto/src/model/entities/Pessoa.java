@@ -64,7 +64,7 @@ public abstract class Pessoa {
     }
 
     public String getTelefoneFormatado(){
-        if (this.telefone == null) {
+        if (telefone == null) {
             return "Telefone não informado!";
         }
 

@@ -70,7 +70,7 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
                     f.setCnpj(rs.getString("cnpj"));
                     return f;
                 } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e) {
-                    throw new DbException("Dados do fornecedor de ID " + id + " está inconsistente: " + e.getMessage());
+                    throw new DbException("Dados do fornecedor de ID " + id + " estão inconsistentes: " + e.getMessage());
                 }
             }
             return null;
@@ -147,10 +147,10 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
 
             int linhasAfetadas = st.executeUpdate();
             if (linhasAfetadas == 0) {
-                throw new DbException("Falha ao deletar: fornecedor de ID " + id + " não encontrado.");
+                throw new DbException("Fornecedor de ID " + id + " não encontrado.");
             }
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
-            throw new DbException("Falha ao deletar: fornecedor de ID " + id + " está vinculado a registros de compra.");
+            throw new DbException("Fornecedor de ID " + id + " não pode ser deletado pois está vinculado a registros de compra");
         } catch (SQLException e) {
             throw new DbException("Erro ao deletar fornecedor: " + e.getMessage());
         } finally {
