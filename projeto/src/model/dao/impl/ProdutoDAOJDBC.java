@@ -22,7 +22,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
 
     public void cadastrar(Produto p) {
         if (p.getId() != null) {
-            throw new DbException("Produto já cadastrado! ID: " + p.getId());
+            throw new DbException("Produto de ID " + p.getId() + " já está cadastrado!");
         }
 
         PreparedStatement st = null;
@@ -87,7 +87,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                         String material = rs.getString("material");
                         return new ProdutoDuravel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, material);
                     }
-                } catch (TipoInvalidoException | PrecoInvalidoException | NomeInvalidoException e) {
+                } catch (TipoInvalidoException | PrecoInvalidoException | NomeInvalidoException | QuantidadeInvalidaException e) {
                     throw new DbException("Dados do produto de ID " + id + " estão inconsistentes: " + e.getMessage());
                 }
             }
@@ -130,7 +130,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                         String material = rs.getString("material");
                         produtos.add(new ProdutoDuravel(idTemp, nome, p_compra, p_venda, qtd_estoque, tipoProd, material));
                     }
-                } catch (TipoInvalidoException | PrecoInvalidoException | NomeInvalidoException e) {
+                } catch (TipoInvalidoException | PrecoInvalidoException | NomeInvalidoException | QuantidadeInvalidaException e) {
                     System.out.println("Dados do produto de ID " + idTemp + " estão inconsistentes: " + e.getMessage());
                 }
             }

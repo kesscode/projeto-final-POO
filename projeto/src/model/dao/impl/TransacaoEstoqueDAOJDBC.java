@@ -3,6 +3,7 @@ package model.dao.impl;
 import db.Db;
 import exceptions.DataInvalidaException;
 import exceptions.DbException;
+import exceptions.QuantidadeInvalidaException;
 import exceptions.TipoInvalidoException;
 import model.dao.TransacaoEstoqueDAO;
 import model.entities.TransacaoEstoque;
@@ -26,11 +27,11 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
         ResultSet rs = null;
 
         try{
-            if (tr.getId() != null) {
-                throw new DbException("Transação já cadastrada! ID: " + tr.getId());
+            if(tr.getId() != null){
+                throw new DbException("Transação de ID " + tr.getId() + " já está cadastrada!");
             }
 
-            //uso de transaction: "desliguei" o commit automatico para garantir a atomicidade
+            //uso de transaction: "desliguei" o commit automatico para controlar manualmente a transação
             conn.setAutoCommit(false);
 
             st = conn.prepareStatement("insert into transacoes_estoque(data_hora, data_validade_lote, " +
@@ -39,10 +40,11 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
 
             st.setTimestamp(1, Timestamp.valueOf(tr.getDataHora()));
 
-            //não tem data (caso da saída)
+            //caso da saída: não tem data
             if(tr.getDataValidadeLote() == null) {
                 st.setNull(2, Types.DATE);
-            } else { //tem data (caso da entrada)
+            }
+            else { //caso da entrada: tem data
                 st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
             }
 
@@ -50,9 +52,10 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             st.setInt(4, tr.getQuantidade());
             st.setInt(5, tr.getIdProduto());
 
-            if (tr.getIdFornecedor() != null) {
+            //caso da saída: não tem fornecedor
+            if(tr.getIdFornecedor() != null) {
                 st.setInt(6, tr.getIdFornecedor());
-            } else {
+            } else { //caso da entrada: tem fornecedor
                 st.setNull(6, Types.INTEGER);
             }
 
@@ -65,12 +68,12 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                 }
             }
 
-            atualizarEstoqueProduto(tr);
-            conn.commit();
+            atualizarEstoqueProduto(tr); //metodo que fará a lógica de att do estoque
+            conn.commit(); //salva as mudanças feitas
 
         } catch (SQLException e) {
             try{
-                conn.rollback();
+                conn.rollback(); //se der errado, volta para o estado original (atomicidade)
             }catch (SQLException e1){
                 throw new DbException("Erro no rollback: " + e1.getMessage());
             }
@@ -79,7 +82,7 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             Db.closeResultSet(rs);
             Db.closeStatement(st);
             try {
-                conn.setAutoCommit(true);
+                conn.setAutoCommit(true); //reabilita o autocommit
             } catch (SQLException e2) {
                 System.out.println(e2.getMessage());
             }
@@ -100,6 +103,7 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                 TransacaoEstoque transacao = new TransacaoEstoque();
                 try {
                     transacao.setId(rs.getInt("id"));
+                    transacao.setTipoMovimento(rs.getString("tipo_movimento"));
 
                     java.sql.Timestamp dataSql = rs.getTimestamp("data_hora");
                     LocalDateTime dataHora = (dataSql != null) ? dataSql.toLocalDateTime() : null;
@@ -110,7 +114,6 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                     transacao.setDataHora(dataHora);
                     transacao.setDataValidadeLote(dataValid);
 
-                    transacao.setTipoMovimento(rs.getString("tipo_movimento"));
                     transacao.setQuantidade(rs.getInt("quantidade"));
                     transacao.setIdProduto(rs.getInt("id_produto"));
 
@@ -123,8 +126,8 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
 
                     return transacao;
 
-                } catch (DataInvalidaException | TipoInvalidoException e) {
-                    throw new DbException("Dados da transação de ID " + id + " está mal-formatado: " + e.getMessage());
+                } catch (DataInvalidaException | TipoInvalidoException | QuantidadeInvalidaException e) {
+                    throw new DbException("Dados da transação de ID " + id + " estão inconsistentes: " + e.getMessage());
                 }
             }
             return null;
@@ -165,8 +168,8 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                     } else {
                         transacoes.add(new TransacaoEstoque(id, dataHora, dataValid, tipoMov, qtd, id_prod, idForn));
                     }
-                } catch (DataInvalidaException | TipoInvalidoException e) {
-                    System.out.println("Dados do produto de ID " + id + " está mal-formatado: " + e.getMessage());
+                } catch (DataInvalidaException | TipoInvalidoException | QuantidadeInvalidaException e) {
+                    System.out.println("Dados da transação de ID " + id + " estão inconsistentes: " + e.getMessage());
                 }
             }
             return transacoes;
@@ -191,27 +194,30 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             //verificação do tipo do produto referenciado na transação atual (conferir se batem)
             if (rs.next()) {
                 String tipoProduto = rs.getString("tipo_produto");
+
                 Date dataSql = rs.getDate("data_validade");
                 LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;
+
                 int estoqueAtual = rs.getInt("quantidade_estoque");
 
-
-                //se o produto referenciado for duravel e tem data de validade, erro!
+                //caso 1: o produto referenciado é durável mas a transação tem data de validade, erro!
                 if (("DURAVEL").equals(tipoProduto) && tr.getDataValidadeLote() != null) {
-                    throw new DbException("Erro: produto durável não pode ter data de validade.");
+                    throw new DbException("Produto durável não pode ter data de validade.");
                 }
 
-                //se o produto referenciado for perecivel, é uma entrada e não tem data de validade, erro!
+                //caso 2: o produto referenciado é perecivel, mas o mov da transação é uma entrada e não tem data de validade, erro!
                 if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento()) && tr.getDataValidadeLote() == null) {
-                    throw new DbException("Erro: Entrada de produto perecivel exige data de validade.");
+                    throw new DbException("Entrada de produto perecível exige data de validade.");
                 }
 
+                //caso 3: o mov é uma saída mas não possui estoque suficiente, erro!
                 if ("SAIDA".equals(tr.getTipoMovimento()) && estoqueAtual < tr.getQuantidade()) {
-                    throw new DbException("Erro: Estoque do produto insuficiente para venda!");
+                    throw new DbException("Estoque do produto é insuficiente para venda!");
                 }
 
 
                 //se passou, tá tudo certo. agora atualizamos o estoque/data
+                //caso 1: produto perecível e movimento de entrada -> estoque somado e data atribuida
                 if (("PERECIVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
                     stUpdate = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ?, data_validade = ? where id = ?");
                     stUpdate.setInt(1, tr.getQuantidade());
@@ -227,25 +233,27 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
                     }
                     stUpdate.setInt(3, tr.getIdProduto());
 
+                //caso 2: produto durável e movimento de entrada -> estoque somado
                 } else if (("DURAVEL").equals(tipoProduto) && "ENTRADA".equals(tr.getTipoMovimento())) {
                     stUpdate = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque + ? where id = ?");
                     stUpdate.setInt(1, tr.getQuantidade());
                     stUpdate.setInt(2, tr.getIdProduto());
 
+                //caso 3: movimento de saída -> estoque descontado
                 } else if ("SAIDA".equals(tr.getTipoMovimento())) {
                     stUpdate = conn.prepareStatement("update produtos set quantidade_estoque = quantidade_estoque - ? where id = ?");
                     stUpdate.setInt(1, tr.getQuantidade());
                     stUpdate.setInt(2, tr.getIdProduto());
-                } else {
-                    throw new DbException("Erro: Tipo de transação inválida.");
+                } else { //caso 4: tipo não reconhecido
+                    throw new DbException("Tipo de transação inválida!");
                 }
 
                 int linhasAfetadas = stUpdate.executeUpdate();
                 if (linhasAfetadas == 0) {
-                    throw new DbException("Erro: Não foi possível atualizar o produto.");
+                    throw new DbException("Não foi possível atualizar o produto!");
                 }
             } else {
-                throw new DbException("Erro: Produto de ID " + tr.getIdProduto() + " não encontrado.");
+                throw new DbException("Produto de ID " + tr.getIdProduto() + " não encontrado.");
             }
         } finally {
             Db.closeResultSet(rs);

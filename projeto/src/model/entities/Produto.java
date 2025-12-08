@@ -2,6 +2,7 @@ package model.entities;
 
 import exceptions.NomeInvalidoException;
 import exceptions.PrecoInvalidoException;
+import exceptions.QuantidadeInvalidaException;
 import exceptions.TipoInvalidoException;
 
 public abstract class Produto {
@@ -19,7 +20,7 @@ public abstract class Produto {
         setNome(nome);
         setPrecoCompra(precoCompra);
         setPrecoVenda(precoVenda);
-        this.quantidadeEstoque = quantidadeEstoque;
+        setQuantidadeEstoque(quantidadeEstoque);
         setTipoProduto(tipoProduto);
     }
 
@@ -79,6 +80,9 @@ public abstract class Produto {
     }
 
     public void setQuantidadeEstoque(int quantidadeEstoque) {
+        if (quantidadeEstoque < 0) {
+            throw new QuantidadeInvalidaException("Quantidade do estoque não pode ser negativa!");
+        }
         this.quantidadeEstoque = quantidadeEstoque;
     }
 
