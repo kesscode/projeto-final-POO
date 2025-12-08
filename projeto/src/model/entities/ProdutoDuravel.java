@@ -24,7 +24,7 @@ public class ProdutoDuravel extends Produto{
 
     public void setMaterial(String material) {
         if (material == null || material.trim().isEmpty()) {
-            throw new TipoInvalidoException("Material do produto está vazio! É obrigatório informar o tipo.");
+            throw new TipoInvalidoException("Material do produto está vazio! É obrigatório informar o material.");
         }
         this.material = material.trim();
     }

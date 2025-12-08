@@ -1,6 +1,7 @@
 package model.entities;
 
 import exceptions.DataInvalidaException;
+import exceptions.QuantidadeInvalidaException;
 import exceptions.TipoInvalidoException;
 
 import java.time.LocalDate;
@@ -21,9 +22,9 @@ public class TransacaoEstoque{
     public TransacaoEstoque(Integer id, LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
         this.id = id;
         setDataHora(dataHora);
-        setDataValidadeLote(dataValidadeLote);
         setTipoMovimento(tipoMovimento);
-        this.quantidade = quantidade;
+        setDataValidadeLote(dataValidadeLote);
+        setQuantidade(quantidade);
         this.idProduto = idProduto;
         this.idFornecedor = idFornecedor;
     }
@@ -32,7 +33,7 @@ public class TransacaoEstoque{
         setDataHora(dataHora);
         setTipoMovimento(tipoMovimento);
         setDataValidadeLote(dataValidadeLote);
-        this.quantidade = quantidade;
+        setQuantidade(quantidade);
         this.idProduto = idProduto;
         this.idFornecedor = idFornecedor;
     }
@@ -66,9 +67,14 @@ public class TransacaoEstoque{
     }
 
     public void setDataValidadeLote(LocalDate dataValidadeLote) {
-        if (tipoMovimento != null && tipoMovimento.equals("ENTRADA") && dataValidadeLote != null && dataValidadeLote.isBefore(LocalDate.now())) {
-            throw new DataInvalidaException("Data inválida! Não é possível dar entrada em um lote já vencido!");
+        if (("ENTRADA").equals(tipoMovimento) && dataValidadeLote != null && dataValidadeLote.isBefore(LocalDate.now())) {
+            throw new DataInvalidaException("Data inválida! A data do lote não pode ser futura.");
         }
+
+        if (("SAIDA").equals(tipoMovimento) && dataValidadeLote != null) {
+            throw new TipoInvalidoException("Data inválida! Saída não possui data de validade!");
+        }
+
         this.dataValidadeLote = dataValidadeLote;
     }
 
@@ -82,12 +88,8 @@ public class TransacaoEstoque{
         }
 
         String tipoPadrao = tipoMovimento.toUpperCase().trim();
-        if (!tipoPadrao.equals("ENTRADA") && !tipoPadrao.equals("SAIDA")) {
-            throw new TipoInvalidoException("Tipo de movimento inválido! Use: ENTRADA ou SAIDA.");
-        }
-
-        if (tipoMovimento.equals("SAIDA") && dataValidadeLote != null) {
-            throw new TipoInvalidoException("Saída não pode ter data de validade!");
+        if (!("ENTRADA").equals(tipoPadrao) && !("SAIDA").equals(tipoPadrao)) {
+            throw new TipoInvalidoException("Tipo de movimento inválido! Opções permitidas: ENTRADA ou SAIDA.");
         }
 
         this.tipoMovimento = tipoPadrao;
@@ -98,6 +100,9 @@ public class TransacaoEstoque{
     }
 
     public void setQuantidade(int quantidade) {
+        if (quantidade <= 0) {
+            throw new QuantidadeInvalidaException("Quantidade informada inválida! Deve ser acima de zero.");
+        }
         this.quantidade = quantidade;
     }
 
@@ -124,7 +129,7 @@ public class TransacaoEstoque{
                 ", dataHora=" + dataHora +
                 ", dataValidadeLote=" + dataValidadeLote +
                 ", tipoMovimento='" + tipoMovimento + '\'' +
-                ", quantidade=" + quantidade +
+                ", quantidade=" + quantidade + "unid" +
                 ", idProduto=" + idProduto +
                 ", idFornecedor=" + idFornecedor +
                 '}';

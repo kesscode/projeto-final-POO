@@ -203,7 +203,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
 
             int linhasAfetadas = st.executeUpdate();
             if (linhasAfetadas == 0) {
-                throw new DbException("Falha ao deletar: produto de ID " + id + " não encontrado.");
+                throw new DbException("Produto de ID " + id + " não encontrado.");
             }
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             throw new DbException("Não é possível deletar produtos vinculados a registros.");
