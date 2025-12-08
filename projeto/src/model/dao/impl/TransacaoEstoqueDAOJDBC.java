@@ -40,11 +40,11 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
 
             st.setTimestamp(1, Timestamp.valueOf(tr.getDataHora()));
 
-            //caso da saída: não tem data
+            //entrada de durável ou saida: não tem data | entrada de perecível: tem data
             if(tr.getDataValidadeLote() == null) {
                 st.setNull(2, Types.DATE);
             }
-            else { //caso da entrada: tem data
+            else {
                 st.setDate(2, Date.valueOf(tr.getDataValidadeLote()));
             }
 
@@ -52,10 +52,10 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             st.setInt(4, tr.getQuantidade());
             st.setInt(5, tr.getIdProduto());
 
-            //caso da saída: não tem fornecedor
+            //entrada: tem fornecedor | saída: não tem fornecedor
             if(tr.getIdFornecedor() != null) {
                 st.setInt(6, tr.getIdFornecedor());
-            } else { //caso da entrada: tem fornecedor
+            } else {
                 st.setNull(6, Types.INTEGER);
             }
 
@@ -71,12 +71,17 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             atualizarEstoqueProduto(tr); //metodo que fará a lógica de att do estoque
             conn.commit(); //salva as mudanças feitas
 
-        } catch (SQLException e) {
+        } catch (SQLException | DbException e) {
             try{
                 conn.rollback(); //se der errado, volta para o estado original (atomicidade)
             }catch (SQLException e1){
                 throw new DbException("Erro no rollback: " + e1.getMessage());
             }
+            // Se já for DbException, relança
+            if (e instanceof DbException) {
+                throw (DbException) e;
+            }
+            // Se for SQLException, encapsula
             throw new DbException("Erro na transação: " + e.getMessage());
         }finally {
             Db.closeResultSet(rs);
@@ -194,11 +199,20 @@ public class TransacaoEstoqueDAOJDBC implements TransacaoEstoqueDAO {
             //verificação do tipo do produto referenciado na transação atual (conferir se batem)
             if (rs.next()) {
                 String tipoProduto = rs.getString("tipo_produto");
-
                 Date dataSql = rs.getDate("data_validade");
                 LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;
-
                 int estoqueAtual = rs.getInt("quantidade_estoque");
+
+
+                //entrada de perecível não pode ter data vencida
+                if ("ENTRADA".equals(tr.getTipoMovimento()) && ("PERECIVEL").equals(tipoProduto) && tr.getDataValidadeLote() != null && tr.getDataValidadeLote().isBefore(LocalDate.now())) {
+                    throw new DbException("Não é possível cadastrar lotes vencidos!");
+                }
+                //saida não pode ter data de validade
+                if ("SAIDA".equals(tr.getTipoMovimento()) && tr.getDataValidadeLote() != null) {
+                    throw new DbException("Movimentos de saída não podem ter data de validade!");
+                }
+
 
                 //caso 1: o produto referenciado é durável mas a transação tem data de validade, erro!
                 if (("DURAVEL").equals(tipoProduto) && tr.getDataValidadeLote() != null) {

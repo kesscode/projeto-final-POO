@@ -22,8 +22,8 @@ public class TransacaoEstoque{
     public TransacaoEstoque(Integer id, LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
         this.id = id;
         setDataHora(dataHora);
+        this.dataValidadeLote = dataValidadeLote;
         setTipoMovimento(tipoMovimento);
-        setDataValidadeLote(dataValidadeLote);
         setQuantidade(quantidade);
         this.idProduto = idProduto;
         this.idFornecedor = idFornecedor;
@@ -31,8 +31,8 @@ public class TransacaoEstoque{
 
     public TransacaoEstoque(LocalDateTime dataHora, LocalDate dataValidadeLote, String tipoMovimento, int quantidade, int idProduto, Integer idFornecedor) {
         setDataHora(dataHora);
+        this.dataValidadeLote = dataValidadeLote;
         setTipoMovimento(tipoMovimento);
-        setDataValidadeLote(dataValidadeLote);
         setQuantidade(quantidade);
         this.idProduto = idProduto;
         this.idFornecedor = idFornecedor;
@@ -67,14 +67,6 @@ public class TransacaoEstoque{
     }
 
     public void setDataValidadeLote(LocalDate dataValidadeLote) {
-        if(("ENTRADA").equals(tipoMovimento) && dataValidadeLote != null && dataValidadeLote.isBefore(LocalDate.now())) {
-            throw new DataInvalidaException("Data inválida! Não é possível cadastrar lotes vencidos");
-        }
-
-        if(("SAIDA").equals(tipoMovimento) && dataValidadeLote != null) {
-            throw new TipoInvalidoException("Data de validade não é permitida em movimentos de saída!");
-        }
-
         this.dataValidadeLote = dataValidadeLote;
     }
 
