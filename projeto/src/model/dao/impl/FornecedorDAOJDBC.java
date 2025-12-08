@@ -23,7 +23,7 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
     @Override
     public void cadastrar(Fornecedor f) {
         if (f.getId() != null) {
-            throw new DbException("Fornecedor já cadastrado! ID: " + f.getId());
+            throw new DbException("Fornecedor de ID " + f.getId() + " já está cadastrado!");
         }
 
         PreparedStatement st = null;
@@ -54,7 +54,6 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
     public Fornecedor buscarPorId(int id) {
         PreparedStatement st = null;
         ResultSet rs = null;
-        Fornecedor f = new Fornecedor();
 
         try {
             st = conn.prepareStatement("select * from fornecedores where id = ?");
@@ -64,13 +63,14 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
 
             if (rs.next()) {
                 try {
+                    Fornecedor f = new Fornecedor();
                     f.setId(rs.getInt("id"));
                     f.setNome(rs.getString("nome"));
                     f.setTelefone(rs.getString("telefone"));
                     f.setCnpj(rs.getString("cnpj"));
                     return f;
                 } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e) {
-                    throw new DbException("Dados do Fornecedor de ID " + id + " está mal-formatado: " + e.getMessage());
+                    throw new DbException("Dados do fornecedor de ID " + id + " está inconsistente: " + e.getMessage());
                 }
             }
             return null;
@@ -87,7 +87,7 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
         ResultSet rs = null;
 
         List<Fornecedor> fornecedores = new ArrayList<>();
-        int temp = 0;
+        int idTemp = 0;
 
         try {
             st = conn.prepareStatement("select * from fornecedores");
@@ -95,17 +95,17 @@ public class FornecedorDAOJDBC implements FornecedorDAO {
 
             while (rs.next()) {
                 try {
-                    temp = rs.getInt("id");
+                    idTemp = rs.getInt("id");
 
                     Fornecedor f = new Fornecedor();
-                    f.setId(temp);
+                    f.setId(idTemp);
                     f.setNome(rs.getString("nome"));
                     f.setTelefone(rs.getString("telefone"));
                     f.setCnpj(rs.getString("cnpj"));
 
                     fornecedores.add(f);
                 } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e) {
-                    System.out.println("Fornecedor de ID " + temp + " ignorado: " + e.getMessage());
+                    System.out.println("Fornecedor de ID " + idTemp + " ignorado (dados inconsistentes): " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
