@@ -153,20 +153,30 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
             st.setDouble(3, p.getPrecoVenda());
 
             if(p instanceof ProdutoPerecivel pp){
-                //Se não tem estoque, não tem data
-                if (pp.getQuantidadeEstoque() == 0) {
+                LocalDate dataValidade = pp.getDataValidade();
+                int estoque = pp.getQuantidadeEstoque();
+
+                //caso 1: produto recém cadastrado (não tem data e nem estoque)
+                if (estoque == 0 && dataValidade == null) {
                     st.setNull(4, Types.DATE);
                 }
-                //Se tem estoque, precisa ter data
-                else {
-                    if (pp.getDataValidade() == null) {
-                        throw new DataInvalidaException("Informe uma data não nula! Produto com estoque precisa ter data de validade.");
+                //caso 2: produto com estoque precisa ter data válida (não nula e não vencida)
+                else if (estoque > 0) {
+                    if (dataValidade == null) {
+                        throw new DataInvalidaException("Produto com estoque precisa ter data de validade.");
                     }
-                    //add validação de data errada
-                    st.setDate(4, java.sql.Date.valueOf(pp.getDataValidade()));
+                    if (dataValidade.isBefore(LocalDate.now())) {
+                        throw new DataInvalidaException("Data de validade está vencida! Atualize para um lote válido.");
+                    }
+                    st.setDate(4, java.sql.Date.valueOf(dataValidade));
                 }
-                st.setNull(5,Types.VARCHAR);
-            }else if(p instanceof ProdutoDuravel pd) {
+                //caso 3: produto sem estoque mas com data preenchida
+                else if (estoque == 0 && dataValidade != null) {
+                    st.setNull(4, Types.DATE); //já atribui nulo
+                }
+                st.setNull(5, Types.VARCHAR);
+
+            } else if(p instanceof ProdutoDuravel pd) {
                 st.setNull(4, Types.DATE);
                 st.setString(5, pd.getMaterial());
             }
