@@ -1,7 +1,8 @@
 package model.entities;
 
+import exceptions.NomeInvalidoException;
+import exceptions.PrecoInvalidoException;
 import exceptions.TipoInvalidoException;
-
 
 public abstract class Produto {
     private Integer id;
@@ -15,18 +16,19 @@ public abstract class Produto {
 
     public Produto(Integer id, String nome, double precoCompra, double precoVenda, int quantidadeEstoque, String tipoProduto) {
         this.id = id;
-        this.nome = nome;
-        this.precoCompra = precoCompra;
-        this.precoVenda = precoVenda;
+        setNome(nome);
+        setPrecoCompra(precoCompra);
+        setPrecoVenda(precoVenda);
         this.quantidadeEstoque = quantidadeEstoque;
         setTipoProduto(tipoProduto);
     }
 
     //Adotei que o produto cadastrado nasce sem quantidade de estoque, portanto isso não deve ser preenchido pelo usuário
+    //Vou usar esse construtor para registrar novos produtos
     public Produto(String nome, double precoCompra, double precoVenda, String tipoProduto) {
-        this.nome = nome;
-        this.precoCompra = precoCompra;
-        this.precoVenda = precoVenda;
+        setNome(nome);
+        setPrecoCompra(precoCompra);
+        setPrecoVenda(precoVenda);
         this.quantidadeEstoque = 0;
         setTipoProduto(tipoProduto);
     }
@@ -44,7 +46,10 @@ public abstract class Produto {
     }
 
     public void setNome(String nome) {
-        this.nome = nome;
+        if(nome == null || nome.trim().isEmpty()){
+            throw new NomeInvalidoException("Nome do produto inválido! Preencha corretamente.");
+        }
+        this.nome = nome.trim();
     }
 
     public double getPrecoCompra() {
@@ -52,6 +57,9 @@ public abstract class Produto {
     }
 
     public void setPrecoCompra(double precoCompra) {
+        if (precoCompra < 0) {
+            throw new PrecoInvalidoException("Preço de compra não pode ser negativo!");
+        }
         this.precoCompra = precoCompra;
     }
 
@@ -60,6 +68,9 @@ public abstract class Produto {
     }
 
     public void setPrecoVenda(double precoVenda) {
+        if (precoVenda < 0) {
+            throw new PrecoInvalidoException("Preço de venda não pode ser negativo!");
+        }
         this.precoVenda = precoVenda;
     }
 
@@ -77,12 +88,12 @@ public abstract class Produto {
 
     public void setTipoProduto(String tipoProduto) {
         if (tipoProduto == null) {
-            throw new TipoInvalidoException("Tipo de produto inválido! É obrigatório informar o tipo.");
+            throw new TipoInvalidoException("Tipo de produto não pode ser nulo! É obrigatório informar o tipo.");
         }
         String tipoPadrao = tipoProduto.toUpperCase().trim();
 
-        if (!tipoPadrao.equals("PERECIVEL") && !tipoPadrao.equals("DURAVEL")) {
-            throw new TipoInvalidoException("Tipo de produto inválido! Use apenas: PERECIVEL ou DURAVEL.");
+        if(!("PERECIVEL").equals(tipoPadrao) && !("DURAVEL").equals(tipoPadrao)) {
+            throw new TipoInvalidoException("Tipo de produto inválido! Opções permitidas: PERECIVEL ou DURAVEL.");
         }
         this.tipoProduto = tipoPadrao;
     }

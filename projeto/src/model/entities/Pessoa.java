@@ -39,7 +39,7 @@ public abstract class Pessoa {
         if(nome == null || nome.trim().isEmpty()){
             throw new NomeInvalidoException("Nome inválido! Preencha corretamente.");
         }
-        this.nome = nome;
+        this.nome = nome.trim();
     }
 
     public String getTelefone() {

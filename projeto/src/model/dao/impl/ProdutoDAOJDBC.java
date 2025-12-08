@@ -1,9 +1,7 @@
 package model.dao.impl;
 
 import db.Db;
-import exceptions.DataInvalidaException;
-import exceptions.DbException;
-import exceptions.TipoInvalidoException;
+import exceptions.*;
 import model.dao.ProdutoDAO;
 import model.entities.Produto;
 import model.entities.ProdutoDuravel;
@@ -73,27 +71,26 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
 
             rs = st.executeQuery();
             if (rs.next()) {
-                String nome = rs.getString("nome");
-                double p_compra = rs.getDouble("preco_compra");
-                double p_venda = rs.getDouble("preco_venda");
-                int qtd_estoque = rs.getInt("quantidade_estoque");
-                String tipoProd = rs.getString("tipo_produto");
+                try {
+                    String nome = rs.getString("nome");
+                    double p_compra = rs.getDouble("preco_compra");
+                    double p_venda = rs.getDouble("preco_venda");
+                    int qtd_estoque = rs.getInt("quantidade_estoque");
+                    String tipoProd = rs.getString("tipo_produto");
 
-                if ("PERECIVEL".equals(tipoProd)) {
-                    Date dataSql = rs.getDate("data_validade");
-                    LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;;
+                    if ("PERECIVEL".equals(tipoProd)) {
+                        Date dataSql = rs.getDate("data_validade");
+                        LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;
 
-                    return new ProdutoPerecivel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, dataValid);
-                } else {
-                    try {
+                        return new ProdutoPerecivel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, dataValid);
+                    } else {
                         String material = rs.getString("material");
                         return new ProdutoDuravel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, material);
-                    } catch (TipoInvalidoException e) {
-                        throw new DbException("Dados do produto de ID " + id + " está mal-formatado: " + e.getMessage());
                     }
+                } catch (TipoInvalidoException | PrecoInvalidoException | NomeInvalidoException e) {
+                    throw new DbException("Dados do produto de ID " + id + " estão inconsistentes: " + e.getMessage());
                 }
             }
-
             return null;
 
         } catch (SQLException e) {
@@ -114,29 +111,27 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
             rs = st.executeQuery();
 
             while (rs.next()) {
-                int id = rs.getInt("id");
+                int idTemp = 0;
+
+                try {
+                idTemp = rs.getInt("id");
                 String nome = rs.getString("nome");
                 double p_compra = rs.getDouble("preco_compra");
                 double p_venda = rs.getDouble("preco_venda");
                 int qtd_estoque = rs.getInt("quantidade_estoque");
                 String tipoProd = rs.getString("tipo_produto");
 
-                try {
                     if ("PERECIVEL".equals(tipoProd)) {
                         Date dataSql = rs.getDate("data_validade");
                         LocalDate dataValid = (dataSql != null) ? dataSql.toLocalDate() : null;;
 
-                        produtos.add(new ProdutoPerecivel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, dataValid));
+                        produtos.add(new ProdutoPerecivel(idTemp, nome, p_compra, p_venda, qtd_estoque, tipoProd, dataValid));
                     } else {
-                        try {
-                            String material = rs.getString("material");
-                            produtos.add(new ProdutoDuravel(id, nome, p_compra, p_venda, qtd_estoque, tipoProd, material));
-                        } catch (TipoInvalidoException e) {
-                            throw new DbException("Dados do produto de ID " + id + " está mal-formatado: " + e.getMessage());
-                        }
+                        String material = rs.getString("material");
+                        produtos.add(new ProdutoDuravel(idTemp, nome, p_compra, p_venda, qtd_estoque, tipoProd, material));
                     }
-                } catch (TipoInvalidoException e) {
-                    System.out.println("Dados do produto de ID " + id + " está mal-formatado: " + e.getMessage());
+                } catch (TipoInvalidoException | PrecoInvalidoException | NomeInvalidoException e) {
+                    System.out.println("Dados do produto de ID " + idTemp + " estão inconsistentes: " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
@@ -165,7 +160,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                 //Se tem estoque, precisa ter data
                 else {
                     if (pp.getDataValidade() == null) {
-                        throw new DataInvalidaException("Erro ao atualizar data: Produto com estoque positivo precisa ter data de validade.");
+                        throw new DataInvalidaException("Informe uma data não nula! Produto com estoque precisa ter data de validade.");
                     }
                     //add validação de data errada
                     st.setDate(4, java.sql.Date.valueOf(pp.getDataValidade()));
@@ -201,7 +196,7 @@ public class ProdutoDAOJDBC implements ProdutoDAO {
                 throw new DbException("Falha ao deletar: produto de ID " + id + " não encontrado.");
             }
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
-            throw new DbException("Falha ao deletar: produto de ID " + id + " está vinculado a registros.");
+            throw new DbException("Não é possível deletar produtos vinculados a registros.");
         } catch (SQLException e) {
             throw new DbException("Erro ao deletar produto: " + e.getMessage());
         } finally {

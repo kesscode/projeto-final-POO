@@ -9,13 +9,13 @@ public class ProdutoPerecivel extends Produto{
 
     public ProdutoPerecivel(Integer id, String nome, double precoCompra, double precoVenda, int quantidadeEstoque, String tipoProduto, LocalDate dataValidade){
         super(id, nome, precoCompra, precoVenda, quantidadeEstoque, tipoProduto);
-        setDataValidade(dataValidade);
+        this.dataValidade = dataValidade;
     }
 
-    //Adotei que o produto cadastrado nasce sem qtd de estoque e dataVal, portanto esse construtor garante q esses dados não devem ser preenchidos pelo usuário
+    //Adotei que o produtoPerecivel "nasce" sem qtd de estoque e dataVal, portanto esse construtor garante q esses dados não devem ser preenchidos pelo usuário
     public ProdutoPerecivel(String nome, double precoCompra, double precoVenda, String tipoProduto) {
         super(nome, precoCompra, precoVenda, tipoProduto);
-        dataValidade = null;
+        this.dataValidade = null;
     }
 
     public LocalDate getDataValidade() {
@@ -29,7 +29,7 @@ public class ProdutoPerecivel extends Produto{
     @Override
     public boolean isDisponivel() {
         //o produto foi recém-criado, sem estoque
-        if (this.dataValidade == null) {
+        if (dataValidade == null) {
             return false;
         }
         //se o estoque for maior que zero e a data de validade estiver no prazo, está disponível

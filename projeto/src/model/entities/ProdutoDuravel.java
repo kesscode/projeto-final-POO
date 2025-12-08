@@ -10,12 +10,12 @@ public class ProdutoDuravel extends Produto{
 
     public ProdutoDuravel(Integer id, String nome, double precoCompra, double precoVenda, int quantidadeEstoque, String tipoProduto, String material) {
         super(id, nome, precoCompra, precoVenda, quantidadeEstoque, tipoProduto);
-        this.material = material;
+        setMaterial(material);
     }
 
     public ProdutoDuravel(String nome, double precoCompra, double precoVenda, String tipoProduto, String material) {
         super(nome, precoCompra, precoVenda, tipoProduto);
-        this.material = material;
+        setMaterial(material);
     }
 
     public String getMaterial() {
@@ -26,7 +26,7 @@ public class ProdutoDuravel extends Produto{
         if (material == null || material.trim().isEmpty()) {
             throw new TipoInvalidoException("Material do produto está vazio! É obrigatório informar o tipo.");
         }
-        this.material = material;
+        this.material = material.trim();
     }
 
     @Override
