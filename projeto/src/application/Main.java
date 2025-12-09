@@ -1,5 +1,14 @@
 package application;
 
+import exceptions.CnpjInvalidoException;
+import exceptions.DbException;
+import exceptions.NomeInvalidoException;
+import exceptions.TelefoneInvalidoException;
+import model.dao.DAOFactory;
+import model.entities.Fornecedor;
+
+import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -26,22 +35,30 @@ public class Main {
                         break;
                     case 0:
                         System.out.println("\n🔒 Encerrando... Volte sempre ao Pet Stok! 🐾");
+                        break;
                     default:
+                        System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
+                        break;
 
                 }
-            }catch (Exception e){
-                System.out.println("❌ Erro! Digite apenas números!");
+            }catch (InputMismatchException e){
+                System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
+            }catch (Exception e){
+                System.out.println("❌ Erro Inesperado: " + e.getMessage());
             }
 
         }while(opcao != 0);
 
+        sc.close();
     }
 
 //GERENCIAMENTO DE CADA ENTIDADE
 
     private static void gerenciarFornecedores(Scanner sc){
         int opcao = 0;
+        Integer id;
+        String nome, telefone, cnpj;
 
         do{
             menuFornecedores();
@@ -51,33 +68,148 @@ public class Main {
 
                 switch (opcao) {
                     case 1:
+                        System.out.println("\n---ESCOLHA: Cadastrar Novo Fornecedor---");
+                        System.out.println("\nINFORME OS DADOS NECESSÁRIOS ABAIXO ↓");
 
+                        try{
+                            System.out.println("Nome: ");
+                            nome = sc.nextLine();
+
+                            System.out.println("Telefone: ");
+                            telefone = sc.nextLine();
+
+                            System.out.println("CNPJ (apenas números): ");
+                            cnpj = sc.nextLine();
+
+                            Fornecedor f = new Fornecedor(nome,telefone,cnpj);
+                            DAOFactory.createFornecedorDAO().cadastrar(f);
+
+                            System.out.println("✅ Fornecedor cadastrado com sucesso!");
+                            System.out.println("Dados registrados: " + f.toString());
+
+                        }catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e){
+                            System.out.println("❌ Erro de Validação: " + e.getMessage());
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
 
                     case 2:
+                        System.out.println("\n---ESCOLHA: Consultar Fornecedor---");
+                        System.out.println("\nINFORME O DADO NECESSÁRIO ABAIXO ↓");
+                        try{
+                            System.out.println("ID do Fornecedor: ");
+                            id = sc.nextInt();
+                            sc.nextLine();
 
+                            Fornecedor f = DAOFactory.createFornecedorDAO().buscarPorId(id);
+                            if(f != null){
+                                System.out.println("✅ Fornecedor encontrado!");
+                                System.out.println(f.toString());
+                            } else {
+                                System.out.println("❌ Fornecedor de ID " + id + " não encontrado.");
+                            }
+                        }catch (InputMismatchException e){
+                            System.out.println("❌ Erro: Digite apenas números!");
+                            sc.nextLine();
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
 
                     case 3:
-
+                        System.out.println("\n---ESCOLHA: Consultar Lista de Fornecedores---");
+                        System.out.println("\nCONSULTANDO... ↓");
+                        try{
+                            List<Fornecedor> fornecedores = DAOFactory.createFornecedorDAO().buscarTodos();
+                            if(!fornecedores.isEmpty()){
+                                System.out.println("Lista de Fornecedores:\n");
+                                for (Fornecedor f : fornecedores){
+                                    System.out.println(f.toString());
+                                }
+                            } else {
+                                System.out.println("❌ Nenhum fornecedor cadastrado no momento.");
+                            }
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
 
                     case 4:
+                        System.out.println("\n---ESCOLHA: Editar Dados de um Fornecedor---");
+                        System.out.println("\nINFORME O ID DO FORNECEDOR QUE DESEJA MODIFICAR ABAIXO ↓");
+                        try{
+                            System.out.println("ID: ");
+                            id = sc.nextInt();
+                            sc.nextLine();
 
+                            Fornecedor f = DAOFactory.createFornecedorDAO().buscarPorId(id);
+                            if(f != null){
+                                System.out.println("\nINFORME OS DADOS QUE DESEJA MODIFICAR ABAIXO ↓");
+                                System.out.println("Nome: ");
+                                nome = sc.nextLine();
+
+                                System.out.println("Telefone: ");
+                                telefone = sc.nextLine();
+
+                                f.setNome(nome);
+                                f.setTelefone(telefone);
+
+                                DAOFactory.createFornecedorDAO().atualizar(f);
+                                System.out.println("✅ Dados do Fornecedor de ID " + f.getId() + " atualizados com sucesso!);");
+                            } else {
+                                System.out.println("❌ Fornecedor de ID " + id + " não encontrado.");
+                            }
+
+                        }catch (InputMismatchException e){
+                            System.out.println("❌ Erro: Digite apenas números!");
+                            sc.nextLine();
+                        }catch (NomeInvalidoException | TelefoneInvalidoException e){
+                            System.out.println("❌ Erro de Validação: " + e.getMessage());
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
 
                     case 5:
+                        System.out.println("\n---ESCOLHA: Excluir Fornecedor---");
+                        System.out.println("\nINFORME O DADO NECESSÁRIO ABAIXO ↓");
 
+                        try{
+                            System.out.println("ID: ");
+                            id = sc.nextInt();
+                            sc.nextLine();
+
+                            DAOFactory.createFornecedorDAO().deletarPorId(id);
+                            System.out.println("✅ Fornecedor deletado com sucesso!");
+                        }catch (InputMismatchException e){
+                            System.out.println("❌ Erro: Digite apenas números!");
+                            sc.nextLine();
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
-
+                    //Voltar ao Menu Principal
                     case 0:
                         System.out.println("\n↩ Retornando ao Menu Principal... 🐾");
+                        break;
                     default:
-
+                        System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
                 }
             }catch (Exception e){
-                System.out.println("❌ Erro! Digite apenas números!");
+                System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
+                opcao = -1;
             }
         }while(opcao != 0);
     }
