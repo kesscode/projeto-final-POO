@@ -7,7 +7,6 @@ import model.entities.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -45,6 +44,7 @@ public class Main {
             }catch (InputMismatchException e){
                 System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
+                opcao = -1;
             }catch (Exception e){
                 System.out.println("❌ Erro Inesperado: " + e.getMessage());
             }
@@ -58,14 +58,15 @@ public class Main {
 
     private static void gerenciarFornecedores(Scanner sc){
         int opcao = 0;
-        Integer id;
-        String nome, telefone, cnpj;
 
         do{
             menuFornecedores();
             try {
                 opcao = sc.nextInt();
                 sc.nextLine();
+
+                Integer id;
+                String nome, telefone, cnpj;
 
                 switch (opcao) {
                     case 1:
@@ -185,7 +186,7 @@ public class Main {
                         System.out.println("\nINFORME O DADO NECESSÁRIO ABAIXO ↓");
 
                         try{
-                            System.out.println("ID: ");
+                            System.out.println("ID do Fornecedor: ");
                             id = sc.nextInt();
                             sc.nextLine();
 
@@ -207,10 +208,12 @@ public class Main {
                     default:
                         System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
                 }
-            }catch (Exception e){
+            }catch (InputMismatchException e){
                 System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
                 opcao = -1;
+            }catch (Exception e){
+                System.out.println("❌ Erro Inesperado: " + e.getMessage());
             }
         }while(opcao != 0);
     }
@@ -227,7 +230,6 @@ public class Main {
                 Integer id;
                 String nome, tipoProduto, material;
                 double precoCompra, precoVenda;
-                int quantidadeEstoque;
                 LocalDate dataVal;
 
                 //String nome, double precoCompra, double precoVenda, String tipoProduto
@@ -251,7 +253,7 @@ public class Main {
                             System.out.println("Tipo DURAVEL ou PERECIVEL (escreva sem acentos): ");
                             tipoProduto = sc.nextLine().toUpperCase().trim();
 
-                            Produto p = null;
+                            Produto p;
                             if("PERECIVEL".equals(tipoProduto)){
                                 //perecivel nasce sem data de validade
                                 p = new ProdutoPerecivel(nome,precoCompra, precoVenda, tipoProduto);
@@ -309,7 +311,7 @@ public class Main {
                     //Consultar Lista de Produtos
                     case 3:
                         System.out.println("\n---ESCOLHA: Consultar Lista de Produtos---");
-
+                        System.out.println("\nCONSULTANDO... ↓");
                         try {
                             List<Produto> produtos = DAOFactory.createProdutoDAO().buscarTodos();
 
@@ -392,7 +394,7 @@ public class Main {
                         System.out.println("\nINFORME O DADO NECESSÁRIO ABAIXO ↓");
 
                         try{
-                            System.out.println("ID: ");
+                            System.out.println("ID do Produto: ");
                             id = sc.nextInt();
                             sc.nextLine();
 
@@ -413,10 +415,12 @@ public class Main {
                     default:
                         System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
                 }
-            }catch (Exception e){
+            }catch (InputMismatchException e){
                 System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
                 opcao = -1;
+            }catch (Exception e){
+                System.out.println("❌ Erro Inesperado: " + e.getMessage());
             }
         }while(opcao != 0);
     }
@@ -451,7 +455,7 @@ public class Main {
                             quantidade = sc.nextInt();
                             sc.nextLine();
 
-                            System.out.println("Tipo de movimento (ENTRADA ou SAIDA): ");
+                            System.out.println("Tipo de movimento (ENTRADA ou SAIDA) | escreva sem acento): ");
                             tipoMovimento = sc.nextLine().toUpperCase().trim();
 
                             if("ENTRADA".equals(tipoMovimento)) {
@@ -486,7 +490,7 @@ public class Main {
                             System.out.println("❌ Erro: Digite apenas números!");
                             sc.nextLine();
                         }catch (DateTimeParseException e) {
-                            System.out.println("❌ Erro de Data: Use o formato AAAA-MM-DDTHH:mm");
+                            System.out.println("❌ Erro: Formato de data inválido!");
                         }
                         catch (TipoInvalidoException | QuantidadeInvalidaException | DataInvalidaException e){
                             System.out.println("❌ Erro de Validação: " + e.getMessage());
@@ -551,10 +555,12 @@ public class Main {
                         System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
                         break;
                 }
-            }catch (Exception e){
+            }catch (InputMismatchException e){
                 System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
                 opcao = -1;
+            }catch (Exception e){
+                System.out.println("❌ Erro Inesperado: " + e.getMessage());
             }
         }while(opcao != 0);
     }
