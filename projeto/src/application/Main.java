@@ -2,12 +2,10 @@ package application;
 
 import exceptions.*;
 import model.dao.DAOFactory;
-import model.entities.Fornecedor;
-import model.entities.Produto;
-import model.entities.ProdutoDuravel;
-import model.entities.ProdutoPerecivel;
+import model.entities.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
@@ -400,6 +398,7 @@ public class Main {
 
                             DAOFactory.createProdutoDAO().deletarPorId(id);
                             System.out.println("✅ Produto deletado com sucesso!");
+
                         }catch (InputMismatchException e){
                             System.out.println("❌ Erro: Digite apenas números!");
                             sc.nextLine();
@@ -412,11 +411,12 @@ public class Main {
                     case 0:
                         System.out.println("\n↩ Retornando ao Menu Principal... 🐾");
                     default:
-
+                        System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
                 }
             }catch (Exception e){
-                System.out.println("❌ Erro! Digite apenas números!");
+                System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
+                opcao = -1;
             }
         }while(opcao != 0);
     }
@@ -430,26 +430,131 @@ public class Main {
                 opcao = sc.nextInt();
                 sc.nextLine();
 
+                Integer id;
+                Integer idFornecedor = null;
+                LocalDateTime dataHora;
+                LocalDate dataValidadeLote = null;
+                String tipoMovimento;
+                int quantidade, idProduto;
+
                 switch (opcao) {
                     case 1:
+                        System.out.println("\n---ESCOLHA: Cadastrar Nova Transação---");
+                        System.out.println("\nINFORME OS DADOS NECESSÁRIOS ABAIXO ↓");
 
+                        try{
+                            System.out.println("ID do Produto: ");
+                            idProduto = sc.nextInt();
+                            sc.nextLine();
+
+                            System.out.println("Quantidade: ");
+                            quantidade = sc.nextInt();
+                            sc.nextLine();
+
+                            System.out.println("Tipo de movimento (ENTRADA ou SAIDA): ");
+                            tipoMovimento = sc.nextLine().toUpperCase().trim();
+
+                            if("ENTRADA".equals(tipoMovimento)) {
+                                System.out.println("ID do Fornecedor: ");
+                                idFornecedor = sc.nextInt();
+                                sc.nextLine();
+
+                                System.out.print("Data de validade do lote (AAAA-MM-DD) | Enter se não tiver: ");
+                                String valTemp = sc.nextLine();
+                                if (!valTemp.isBlank()) {
+                                    dataValidadeLote = LocalDate.parse(valTemp);
+                                }
+                            }else if("SAIDA".equals(tipoMovimento)){
+                                idFornecedor = null;
+                                dataValidadeLote = null;
+                            }else{
+                                System.out.println("❌ Tipo de movimento inválido! Cadastro cancelado.");
+                                break;
+                            }
+
+                            System.out.println("Data e Hora da Transação (AAAA-MM-DDTHH:mm): ");
+                            String dhTemp = sc.nextLine();
+                            dataHora = LocalDateTime.parse(dhTemp);
+
+                            TransacaoEstoque tr = new TransacaoEstoque(dataHora, dataValidadeLote, tipoMovimento, quantidade, idProduto, idFornecedor);
+                            DAOFactory.createTransacaoEstoqueDAO().cadastrar(tr);
+
+                            System.out.println("✅ Transação cadastrada com sucesso!");
+                            System.out.println("Dados registrados: " + tr.toString());
+
+                        }catch (InputMismatchException e){
+                            System.out.println("❌ Erro: Digite apenas números!");
+                            sc.nextLine();
+                        }catch (DateTimeParseException e) {
+                            System.out.println("❌ Erro de Data: Use o formato AAAA-MM-DDTHH:mm");
+                        }
+                        catch (TipoInvalidoException | QuantidadeInvalidaException | DataInvalidaException e){
+                            System.out.println("❌ Erro de Validação: " + e.getMessage());
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
 
                     case 2:
+                        System.out.println("\n---ESCOLHA: Consultar Transação---");
+                        System.out.println("\nINFORME O DADO NECESSÁRIO ABAIXO ↓");
 
+                        try{
+                            System.out.println("ID da Transação: ");
+                            id = sc.nextInt();
+                            sc.nextLine();
+
+                            TransacaoEstoque tr = DAOFactory.createTransacaoEstoqueDAO().buscarPorId(id);
+                            if(tr != null){
+                                System.out.println("✅ Transação encontrada!");
+                                System.out.println(tr.toString());
+                            } else {
+                                System.out.println("❌ Transação de ID " + id + " não encontrada.");
+                            }
+                        }catch (InputMismatchException e){
+                            System.out.println("❌ Erro: Digite apenas números!");
+                            sc.nextLine();
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
 
                     case 3:
-
+                        System.out.println("\n---ESCOLHA: Consultar Lista de Transações---");
+                        System.out.println("\nCONSULTANDO... ↓");
+                        try{
+                            List<TransacaoEstoque> transacoes = DAOFactory.createTransacaoEstoqueDAO().buscarTodos();
+                            if(!transacoes.isEmpty()){
+                                System.out.println("Lista de Transações:\n");
+                                for (TransacaoEstoque tr : transacoes){
+                                    System.out.println(tr.toString());
+                                }
+                            } else {
+                                System.out.println("❌ Nenhuma transação cadastrada no momento.");
+                            }
+                        }catch (DbException e){
+                            System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
+                        }catch (Exception e){
+                            System.out.println("❌ Erro Inesperado: " + e.getMessage());
+                        }
                         break;
 
                     case 0:
                         System.out.println("\n↩ Retornando ao Menu Principal... 🐾");
+                        break;
+
                     default:
+                        System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
+                        break;
                 }
             }catch (Exception e){
-                System.out.println("❌ Erro! Digite apenas números!");
+                System.out.println("❌ Erro: Digite apenas números!");
                 sc.nextLine();
+                opcao = -1;
             }
         }while(opcao != 0);
     }
