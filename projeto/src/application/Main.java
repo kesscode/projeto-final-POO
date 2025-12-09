@@ -1,5 +1,6 @@
 package application;
 
+import db.Db;
 import exceptions.*;
 import model.dao.DAOFactory;
 import model.entities.*;
@@ -16,42 +17,42 @@ public class Main {
 
         int opcao = 0;
         Scanner sc = new Scanner(System.in);
+        try {
+            do {
+                menuPrincipal();
+                try {
+                    opcao = sc.nextInt();
+                    sc.nextLine();
 
-        do{
-            menuPrincipal();
-            try {
-                opcao = sc.nextInt();
-                sc.nextLine();
-
-                switch (opcao) {
-                    case 1:
-                        gerenciarFornecedores(sc);
-                        break;
-                    case 2:
-                        gerenciarProdutos(sc);
-                        break;
-                    case 3:
-                        gerenciarTransacoes(sc);
-                        break;
-                    case 0:
-                        System.out.println("\n🔒 Encerrando... Volte sempre ao Pet Stok! 🐾");
-                        break;
-                    default:
-                        System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
-                        break;
-
+                    switch (opcao) {
+                        case 1:
+                            gerenciarFornecedores(sc);
+                            break;
+                        case 2:
+                            gerenciarProdutos(sc);
+                            break;
+                        case 3:
+                            gerenciarTransacoes(sc);
+                            break;
+                        case 0:
+                            System.out.println("\n🔒 Encerrando... Volte sempre ao Pet Stok! 🐾");
+                            break;
+                        default:
+                            System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
+                            break;
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println("❌ Erro: Digite apenas números!");
+                    sc.nextLine();
+                    opcao = -1;
+                } catch (Exception e) {
+                    System.out.println("❌ Erro Inesperado: " + e.getMessage());
                 }
-            }catch (InputMismatchException e){
-                System.out.println("❌ Erro: Digite apenas números!");
-                sc.nextLine();
-                opcao = -1;
-            }catch (Exception e){
-                System.out.println("❌ Erro Inesperado: " + e.getMessage());
-            }
-
-        }while(opcao != 0);
-
-        sc.close();
+            } while (opcao != 0);
+        } finally {
+            Db.closeConnection();
+            sc.close();
+        }
     }
 
 //GERENCIAMENTO DE CADA ENTIDADE
@@ -232,7 +233,6 @@ public class Main {
                 double precoCompra, precoVenda;
                 LocalDate dataVal;
 
-                //String nome, double precoCompra, double precoVenda, String tipoProduto
                 switch (opcao) {
                     case 1:
                         System.out.println("\n---ESCOLHA: Cadastrar Novo Produto---");
@@ -273,7 +273,7 @@ public class Main {
                         }catch (InputMismatchException e){
                             System.out.println("❌ Erro: Digite apenas números!");
                             sc.nextLine();
-                        } catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e){
+                        } catch (NomeInvalidoException | PrecoInvalidoException | TipoInvalidoException e){
                             System.out.println("❌ Erro de Validação: " + e.getMessage());
                         }catch (DbException e){
                             System.out.println("❌ Erro de Banco de Dados: " + e.getMessage());
@@ -281,7 +281,7 @@ public class Main {
                             System.out.println("❌ Erro Inesperado: " + e.getMessage());
                         }
                         break;
-                    //Consultar Produto
+
                     case 2:
                         System.out.println("\n---ESCOLHA: Consultar Produto---");
                         System.out.println("\nINFORME O DADO NECESSÁRIO ABAIXO ↓");
@@ -308,7 +308,7 @@ public class Main {
                             System.out.println("❌ Erro Inesperado: " + e.getMessage());
                         }
                         break;
-                    //Consultar Lista de Produtos
+
                     case 3:
                         System.out.println("\n---ESCOLHA: Consultar Lista de Produtos---");
                         System.out.println("\nCONSULTANDO... ↓");
@@ -316,7 +316,7 @@ public class Main {
                             List<Produto> produtos = DAOFactory.createProdutoDAO().buscarTodos();
 
                             if (!produtos.isEmpty()) {
-                                System.out.println("Lista de Fornecedores:\n");
+                                System.out.println("Lista de Produtos:\n");
                                 for (Produto p : produtos) {
                                     System.out.println(p.toString());
                                 }
@@ -356,14 +356,18 @@ public class Main {
                                 p.setPrecoVenda(precoVenda);
 
                                 if (p instanceof ProdutoPerecivel pp){
-                                    System.out.println("Data de validade (AAAA-MM-DD): ");
+                                    System.out.println("Data de validade (AAAA-MM-DD) | Enter para deixar vazio: ");
                                     String dataTemp = sc.nextLine();
 
-                                    dataVal = LocalDate.parse(dataTemp);
-                                    if (dataVal.isBefore(LocalDate.now())) {
-                                        throw new DataInvalidaException("Erro: Data não pode estar vencida!");
+                                    if (dataTemp.isBlank()) {
+                                        pp.setDataValidade(null);
+                                    } else {
+                                        dataVal = LocalDate.parse(dataTemp);
+                                        if (dataVal.isBefore(LocalDate.now())) {
+                                            throw new DataInvalidaException("Erro: Data não pode estar vencida!");
+                                        }
+                                        pp.setDataValidade(dataVal);
                                     }
-                                    pp.setDataValidade(dataVal);
                                 } else if (p instanceof ProdutoDuravel pd) {
                                     System.out.println("Material: ");
                                     material = sc.nextLine();
@@ -371,9 +375,11 @@ public class Main {
                                 }
                                 DAOFactory.createProdutoDAO().atualizar(p);
                                 System.out.println("✅ Dados do Produto de ID " + p.getId() + " atualizados com sucesso!");
+
                             } else {
                                 System.out.println("❌ Produto de ID " + id + " não encontrado.");
                             }
+
                         }catch (InputMismatchException e){
                             System.out.println("❌ Erro: Digite apenas números!");
                             sc.nextLine();
@@ -410,10 +416,14 @@ public class Main {
                             System.out.println("❌ Erro Inesperado: " + e.getMessage());
                         }
                         break;
+
                     case 0:
                         System.out.println("\n↩ Retornando ao Menu Principal... 🐾");
+                        break;
+
                     default:
                         System.out.println("\n⚠ Opção inválida! Digite um número de 0 a 5.");
+                        break;
                 }
             }catch (InputMismatchException e){
                 System.out.println("❌ Erro: Digite apenas números!");
