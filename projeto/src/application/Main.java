@@ -465,7 +465,7 @@ public class Main {
                             quantidade = sc.nextInt();
                             sc.nextLine();
 
-                            System.out.println("Tipo de movimento (ENTRADA ou SAIDA) | escreva sem acento): ");
+                            System.out.println("Tipo de movimento (ENTRADA ou SAIDA) | escreva sem acento: ");
                             tipoMovimento = sc.nextLine().toUpperCase().trim();
 
                             if("ENTRADA".equals(tipoMovimento)) {
@@ -473,6 +473,7 @@ public class Main {
                                 idFornecedor = sc.nextInt();
                                 sc.nextLine();
 
+                                //para o caso de produtos pereciveis (data) | produtos duraveis (sem data)
                                 System.out.print("Data de validade do lote (AAAA-MM-DD) | Enter se não tiver: ");
                                 String valTemp = sc.nextLine();
                                 if (!valTemp.isBlank()) {
