@@ -172,21 +172,21 @@ public class Main {
     }
 
     public static void menuFornecedores() {
-        System.out.println("\n┌─────────────────────────────────────────────────┐");
+        System.out.println("\n┌───────────────────────────────────────────────────┐");
         System.out.println("│ 🐾 GERENCIAMENTO DE FORNECEDORES - PET STOCK 🐾   │");
         System.out.println("├───────────────────────────────────────────────────┤");
         System.out.println("│ [1] Cadastrar Novo Fornecedor                🆕   │");
-        System.out.println("│ [2] Consultar Fornecedor                     🔎  │");
-        System.out.println("│ [3] Consultar Lista de Fornecedores          📋  │");
-        System.out.println("│ [4] Editar Dados de um Fornecedor            ✏️  │");
-        System.out.println("│ [5] Excluir Fornecedor                       ❌   │");
-        System.out.println("│ [0] Voltar ao Menu Principal                 👋  │");
-        System.out.println("└──────────────────────────────────────────────────┘");
+        System.out.println("│ [2] Consultar Fornecedor                     🔎   │");
+        System.out.println("│ [3] Consultar Lista de Fornecedores          📋   │");
+        System.out.println("│ [4] Editar Dados de um Fornecedor            ✏️   │");
+        System.out.println("│ [5] Excluir Fornecedor                       ❌    │");
+        System.out.println("│ [0] Voltar ao Menu Principal                 👋   │");
+        System.out.println("└───────────────────────────────────────────────────┘");
         System.out.print("→ Digite sua opção: ");
     }
 
     public static void menuProdutos() {
-        System.out.println("\n┌────────────────────────────────────────────────┐");
+        System.out.println("\n┌──────────────────────────────────────────────────┐");
         System.out.println("│   🐾 GERENCIAMENTO DE PRODUTOS - PET STOCK 🐾    │");
         System.out.println("├──────────────────────────────────────────────────┤");
         System.out.println("│ [1] Cadastrar Novo Produto                   🆕  │");
@@ -200,7 +200,7 @@ public class Main {
     }
 
     public static void menuTransacoes() {
-        System.out.println("\n┌────────────────────────────────────────────────┐");
+        System.out.println("\n┌──────────────────────────────────────────────────┐");
         System.out.println("│  🐾 GERENCIAMENTO DE TRANSAÇÕES - PET STOCK 🐾   │");
         System.out.println("├──────────────────────────────────────────────────┤");
         System.out.println("│ [1] Cadastrar Nova Transação                 🆕  │");
