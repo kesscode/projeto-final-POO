@@ -1,100 +1,216 @@
 package application;
 
-import db.Db;
-import exceptions.*;
-import model.dao.DAOFactory;
-import model.entities.Fornecedor;
-import model.entities.ProdutoDuravel;
-import model.entities.ProdutoPerecivel;
-
-import java.util.ArrayList;
-import java.util.List;
-
-// 🅥 🅧
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
 
-       /* try{
-            Fornecedor f = new Fornecedor("Chuchu e Pila", "(88)9 8599-759", "12.345.678/0001-50");
-            DAOFactory.createFornecedorDAO().cadastrar(f);
+        int opcao = 0;
+        Scanner sc = new Scanner(System.in);
 
-            System.out.println("\uD83C\uDD65 ID: " + f.getId());
-        }catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e){
-            System.out.println("\uD83C\uDD67 ERRO na validação do fornecedor: " + e.getMessage());
-        }catch (DbException e) {
-            System.out.println("\uD83C\uDD67 " + e.getMessage());
-        }*/
+        do{
+            menuPrincipal();
+            try {
+                opcao = sc.nextInt();
+                sc.nextLine();
 
-        try{
-            Fornecedor f = DAOFactory.createFornecedorDAO().buscarPorId(3);
-            if(f != null)
-                System.out.println("FORNECEDOR ENCONTRADO: \n" + f.toString());
-            else
-                System.out.println("Não foi possível encontrar o fornecedor!");
+                switch (opcao) {
+                    case 1:
+                        gerenciarFornecedores(sc);
+                        break;
+                    case 2:
+                        gerenciarProdutos(sc);
+                        break;
+                    case 3:
+                        gerenciarTransacoes(sc);
+                        break;
+                    case 0:
+                        System.out.println("\n🔒 Encerrando... Volte sempre ao Pet Stok! 🐾");
+                    default:
 
-        }catch (NomeInvalidoException | TelefoneInvalidoException | CnpjInvalidoException e){
-            System.out.println("\uD83C\uDD67 " + e.getMessage());
-        }catch (DbException e) {
-            System.out.println("\uD83C\uDD67 " + e.getMessage());
-        }
-
-/*        try{
-            List<Fornecedor> fornecedores = new ArrayList<>();
-            fornecedores = DAOFactory.createFornecedorDAO().buscarTodos();
-            if(!fornecedores.isEmpty()) {
-                System.out.println("-- LISTA DE FORNECEDORES --");
-                for(Fornecedor f : fornecedores){
-                    System.out.println(f.toString());
                 }
-            }else
-                System.out.println("Não foi possível encontrar nenhum fornecedor!");
-        }catch (DbException e) {
-            System.out.println("\uD83C\uDD67 " + e.getMessage());
-        }*/
-
-        /*try{
-            Fornecedor f = DAOFactory.createFornecedorDAO().buscarPorId(5);
-            f.setNome("Pintinha e Bolinha");
-            DAOFactory.createFornecedorDAO().atualizar(f);
-            System.out.println(f.toString());
-        }catch (DbException e) {
-            System.out.println("\uD83C\uDD67 " + e.getMessage());
-        }*/
-
-/*        try{
-            List<Fornecedor> fornecedores = new ArrayList<>();
-            fornecedores = DAOFactory.createFornecedorDAO().buscarTodos();
-            if(!fornecedores.isEmpty()) {
-                System.out.println("-- LISTA DE FORNECEDORES --");
-                for(Fornecedor f : fornecedores){
-                    System.out.println(f.toString());
-                }
+            }catch (Exception e){
+                System.out.println("❌ Erro! Digite apenas números!");
+                sc.nextLine();
             }
-            DAOFactory.createFornecedorDAO().deletarPorId(1);
-            fornecedores = DAOFactory.createFornecedorDAO().buscarTodos();
-            if(!fornecedores.isEmpty()) {
-                System.out.println("-- LISTA DE FORNECEDORES --");
-                for (Fornecedor f : fornecedores) {
-                    System.out.println(f.toString());
-                }
-            }
-        }catch (DbException e) {
-            System.out.println("\uD83C\uDD67 " + e.getMessage());
-        }*/
 
-        /*try{
-            ProdutoDuravel pd = new ProdutoDuravel("Coleira", 85.00, 129.90, "duravel", "Nylon");
-            DAOFactory.createProdutoDAO().cadastrar(pd);
-            System.out.println("Produto cadastrado");
-            System.out.println(pd.toString());
-        }catch (TipoInvalidoException e){
-            System.out.println(e.getMessage());
-        }catch (DbException e){
-            System.out.println(e.getMessage());
-        }*/
+        }while(opcao != 0);
 
-        /*ProdutoDuravel p = (ProdutoDuravel) DAOFactory.createProdutoDAO().buscarPorId(3);
-        System.out.println(p.toString());*/
     }
+
+//GERENCIAMENTO DE CADA ENTIDADE
+
+    private static void gerenciarFornecedores(Scanner sc){
+        int opcao = 0;
+
+        do{
+            menuFornecedores();
+            try {
+                opcao = sc.nextInt();
+                sc.nextLine();
+
+                switch (opcao) {
+                    case 1:
+
+                        break;
+
+                    case 2:
+
+                        break;
+
+                    case 3:
+
+                        break;
+
+                    case 4:
+
+                        break;
+
+                    case 5:
+
+                        break;
+
+                    case 0:
+                        System.out.println("\n↩ Retornando ao Menu Principal... 🐾");
+                    default:
+
+                }
+            }catch (Exception e){
+                System.out.println("❌ Erro! Digite apenas números!");
+                sc.nextLine();
+            }
+        }while(opcao != 0);
+    }
+
+    private static void gerenciarProdutos(Scanner sc){
+        int opcao = 0;
+
+        do{
+            menuProdutos();
+            try {
+                opcao = sc.nextInt();
+                sc.nextLine();
+
+                switch (opcao) {
+                    case 1:
+
+                        break;
+
+                    case 2:
+
+                        break;
+
+                    case 3:
+
+                        break;
+
+                    case 4:
+
+                        break;
+
+                    case 5:
+
+                        break;
+
+                    case 0:
+                        System.out.println("\n↩ Retornando ao Menu Principal... 🐾");
+                    default:
+
+                }
+            }catch (Exception e){
+                System.out.println("❌ Erro! Digite apenas números!");
+                sc.nextLine();
+            }
+        }while(opcao != 0);
+    }
+
+    private static void gerenciarTransacoes(Scanner sc){
+        int opcao = 0;
+
+        do{
+            menuTransacoes();
+            try {
+                opcao = sc.nextInt();
+                sc.nextLine();
+
+                switch (opcao) {
+                    case 1:
+
+                        break;
+
+                    case 2:
+
+                        break;
+
+                    case 3:
+
+                        break;
+
+                    case 0:
+                        System.out.println("\n↩ Retornando ao Menu Principal... 🐾");
+                    default:
+                }
+            }catch (Exception e){
+                System.out.println("❌ Erro! Digite apenas números!");
+                sc.nextLine();
+            }
+        }while(opcao != 0);
+    }
+
+
+    //MENUS INTERATIVOS
+    public static void menuPrincipal(){
+        System.out.println("\n┌──────────────────────────────────────────────────┐");
+        System.out.println("│    🐾 CONTROLE DE ESTOQUE - PET STOCK 🐾         │");
+        System.out.println("├──────────────────────────────────────────────────┤");
+        System.out.println("│ [1] Gerenciar Fornecedores                   🤝  │");
+        System.out.println("│ [2] Gerenciar Produtos                       📦  │");
+        System.out.println("│ [3] Gerenciar Transações do Estoque          🔄  │");
+        System.out.println("│ [0] Sair                                     🚪  │");
+        System.out.println("└──────────────────────────────────────────────────┘");
+        System.out.print("→ Digite sua opção: ");
+    }
+
+    public static void menuFornecedores() {
+        System.out.println("\n┌─────────────────────────────────────────────────┐");
+        System.out.println("│ 🐾 GERENCIAMENTO DE FORNECEDORES - PET STOCK 🐾   │");
+        System.out.println("├───────────────────────────────────────────────────┤");
+        System.out.println("│ [1] Cadastrar Novo Fornecedor                🆕   │");
+        System.out.println("│ [2] Consultar Fornecedor                     🔎  │");
+        System.out.println("│ [3] Consultar Lista de Fornecedores          📋  │");
+        System.out.println("│ [4] Editar Dados de um Fornecedor            ✏️  │");
+        System.out.println("│ [5] Excluir Fornecedor                       ❌   │");
+        System.out.println("│ [0] Voltar ao Menu Principal                 👋  │");
+        System.out.println("└──────────────────────────────────────────────────┘");
+        System.out.print("→ Digite sua opção: ");
+    }
+
+    public static void menuProdutos() {
+        System.out.println("\n┌────────────────────────────────────────────────┐");
+        System.out.println("│   🐾 GERENCIAMENTO DE PRODUTOS - PET STOCK 🐾    │");
+        System.out.println("├──────────────────────────────────────────────────┤");
+        System.out.println("│ [1] Cadastrar Novo Produto                   🆕  │");
+        System.out.println("│ [2] Consultar Produto                        🔎  │");
+        System.out.println("│ [3] Consultar Lista de Produtos              📋  │");
+        System.out.println("│ [4] Editar Dados de um Produto               ✏️  │");
+        System.out.println("│ [5] Excluir Produto                          ❌   │");
+        System.out.println("│ [0] Voltar ao Menu Principal                 👋  │");
+        System.out.println("└──────────────────────────────────────────────────┘");
+        System.out.print("→ Digite sua opção: ");
+    }
+
+    public static void menuTransacoes() {
+        System.out.println("\n┌────────────────────────────────────────────────┐");
+        System.out.println("│  🐾 GERENCIAMENTO DE TRANSAÇÕES - PET STOCK 🐾   │");
+        System.out.println("├──────────────────────────────────────────────────┤");
+        System.out.println("│ [1] Cadastrar Nova Transação                 🆕  │");
+        System.out.println("│ [2] Consultar Transação                      🔎  │");
+        System.out.println("│ [3] Consultar Lista de Transações            📋  │");
+        System.out.println("│ [0] Voltar ao Menu Principal                 👋  │");
+        System.out.println("└──────────────────────────────────────────────────┘");
+        System.out.print("→ Digite sua opção: ");
+    }
+
 }
+
+
