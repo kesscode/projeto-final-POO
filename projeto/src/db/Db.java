@@ -14,7 +14,7 @@ public class Db {
     private static Connection conn = null;
 
     private static final String USUARIO = "root";
-    private static final String SENHA = "1212";
+    private static final String SENHA = "1234";
     private static final String URL_CONEXAO = "jdbc:mysql://localhost:3306/estoque_petshop";
 
     //Estabelece a conexão com o banco (já existente ou uma nova)
@@ -59,6 +59,17 @@ public class Db {
             }catch (SQLException e){
                 throw new DbException(e.getMessage());
             }
+        }
+    }
+
+    //teste para ver se conectou com o banco
+    public static void main(String[] args) throws Exception {
+
+        Connection con = getConnection();
+
+        //Testar se a conexão é nula
+        if(con != null){
+            System.out.println("Conexão obtida com sucesso!");
         }
     }
 }
